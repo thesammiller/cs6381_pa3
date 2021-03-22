@@ -1,0 +1,34 @@
+h1 ./restartzoo.sh
+
+h1 echo “test for in -order flood kills”
+h1 echo “start flood on h2”
+h2 python3 floodproxy.py &
+h1 sleep 10
+h1 echo “start flood on h3”
+h3 python3 floodproxy.py &
+h1 sleep 10
+h1 echo “start flood on h4”
+h4 python3 floodproxy.py & 
+h1 sleep 45
+h1 echo “create sub on host 5 and pub on ahost 6”
+
+h5 python3 subscriber.py 12345 > h5sub_IOFkill.txt &
+h1 sleep 3   
+h6 python3 publisher.py 12345 > h6pub_IOFkill.txt & 
+h1 sleep 3
+
+h2 ps > pids.txt &
+h1 echo “kill the master flood”
+h2 kill $(ps | grep python | awk '{print $1}')
+h1 sleep 30
+h1 echo “kill the new master flood h3”
+h3 kill $(ps | grep python | awk '{print $1}')
+h1 sleep 30
+
+h1 echo “dont kill the new master flood h4”
+h4 # dont kill $(ps | grep python | awk '{print $1}')
+
+h1 sleep 15 
+
+h1 echo "test is done"
+

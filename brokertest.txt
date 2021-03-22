@@ -1,0 +1,6 @@
+h1 ./zooscripts/restartzoo.sh
+h2 ./proxy.py BROKER &
+h3 ./publisher.py 12345 BROKER &
+h4 ./subscriber.py 12345 BROKER &
+h5 ./proxy.py BROKER &
+

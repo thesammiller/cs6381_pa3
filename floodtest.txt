@@ -1,0 +1,6 @@
+h1 ./zooscripts/restartzoo.sh
+h2 ./proxy.py FLOOD &
+h3 ./publisher.py 12345 FLOOD &
+h4 ./subscriber.py 12345 FLOOD &
+h5 ./proxy.py FLOOD &
+
