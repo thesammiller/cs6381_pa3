@@ -1,4 +1,4 @@
-# CS 6381 Distributed Systems Programming Assignment #2
+# CS 6381 Distributed Systems Programming Assignment #3
 
 Application and middleware for ZooKeeper and 0MQ
 
