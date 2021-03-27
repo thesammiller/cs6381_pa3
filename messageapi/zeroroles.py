@@ -34,6 +34,23 @@ FLOOD_SUBSCRIBER_PORT = "5556"
 SERVER_ENDPOINT = "tcp://{address}:{port}"
 NO_REGISTERED_ENTRIES = ""
 
+class ZeroLoad(ZooAnimal):
+    def __init__(self):
+        #ZooAnimal initialize
+        super().__init__()
+        # Zookeeper property
+        self.role = 'load'
+        self.topic = 'balance'
+        #ZMQ Setup
+        self.context = zmq.Context()
+        self.poller = zmq.Poller()
+        self.zookeeper_register()
+
+    def setup_sockets(self):
+        pass
+
+    def run(self):
+        pass
 
 class ZeroProxy(ZooAnimal):
     def __init__(self):

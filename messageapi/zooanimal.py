@@ -128,6 +128,11 @@ class ZooAnimal:
                 #previous = path_sort[-1]
                 watch_path = broker_path + "/" + previous
                 self.zookeeper_watcher(watch_path)
+        elif self.role == 'load':
+            try:
+                self.zk.create(role_topic, ephemeral=True, sequence=True, makepath=True, value=encoded_ip)
+            except:
+                print("Exception -> zooanimal.py -> zookeeper_register -> load elif statement")
         elif self.role =='publisher' or self.role=='subscriber':
             # zk.ensure_path checks if path exists, and if not it creates it
             try:
