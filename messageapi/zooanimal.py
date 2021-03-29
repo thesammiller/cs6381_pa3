@@ -23,7 +23,7 @@ NETWORK_PREFIX = "10"
 
 
 ZOOKEEPER_PATH_STRING = '/{role}/{topic}'
-PATH_TO_MASTER_BROKER = "/broker/master"
+
 
 
 
@@ -165,15 +165,8 @@ class ZooAnimal:
         print("Data -> {}".format(data))
         pass
 
-    def get_broker(self):
-        for i in range(10):
-            if self.zk.exists(PATH_TO_MASTER_BROKER):
-                node_data = self.zk.get(PATH_TO_MASTER_BROKER, watch=self.broker_update)
-                broker_data = node_data[0]
-                master_broker = codecs.decode(broker_data, 'utf-8')
-                if master_broker != '':
-                    self.broker = master_broker
-                    return self.broker
-                else:
-                    raise Exception("No master broker.")
-            time.sleep(0.2)
+
+
+
+
+

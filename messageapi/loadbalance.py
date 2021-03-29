@@ -19,7 +19,7 @@ import zmq
 # Local
 from .util import local_ip4_addr_list
 
-from .zeroroles import ZeroLoad, SERVER_ENDPOINT
+from .zeroroles import ZeroLoad, SERVER_ENDPOINT, LOAD_BALANCE_PORT
 
 BROKER = "broker"
 PUBLISHER = "publisher"
@@ -28,7 +28,7 @@ SUBSCRIBER = "subscriber"
 NO_REGISTERED_ENTRIES = ""
 LOAD_THRESHOLD = 2
 
-LOAD_BALANCE_PORT = '6666'
+
 
 ###############################################################
 #
@@ -56,6 +56,7 @@ class LoadProxy(ZeroLoad):
         self.incoming_socket.bind(SERVER_ENDPOINT.format(address="*", port=LOAD_BALANCE_PORT))
 
     # encloses basic functionality
+    # is a difference in the file
     def run(self):
         print("Running")
         while True:
@@ -74,7 +75,7 @@ class LoadProxy(ZeroLoad):
         if ipaddr not in self.registry[role][topic]:
             self.registry[role][topic].append(ipaddr)
         # based on our role, we need to find the companion ip addresses in the registry
-        broker = self.get_broker()
+        broker = self.get_primary_broker()
         self.incoming_socket.send_string(broker)
 
     def update_registry(self, path):
