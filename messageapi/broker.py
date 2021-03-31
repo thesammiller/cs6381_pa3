@@ -62,6 +62,7 @@ class BrokerProxy(ZeroProxy):
         while True:
             try:
                 self.poll()
+                self.check_master_count()
             except NameError as e:
                 print("Exception thrown: {}".format(sys.exc_info()[1]))
 

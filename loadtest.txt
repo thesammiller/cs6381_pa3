@@ -1,7 +1,11 @@
 h1 ./zooscripts/restartzoo.sh
 h2 ./load.py &
 h3 ./proxy.py BROKER &
+h1 sleep 5
 h4 ./publisher.py 12345 BROKER &
+h1 sleep 1
 h5 ./subscriber.py 12345 BROKER &
+h1 sleep 1
 h6 ./proxy.py BROKER &
+h1 sleep 1
 
