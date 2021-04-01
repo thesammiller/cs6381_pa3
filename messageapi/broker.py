@@ -1,29 +1,22 @@
 #
 # Team 6
-# Programming Assignment #2
+# Programming Assignment #3
 #
 # Contents:
 #   - BrokerProxy
 #   - BrokerPublisher
 #   - BrokerSubscriber
-#
-#   - FloodProxy
-#   - FloodPublisher
-#   - FloodSubscriber
 
-# Standard Library
+
 import codecs
 from collections import defaultdict
 import json
 import sys
 import time
 
-# Third Party
 import zmq
 
-# Local
 from .util import local_ip4_addr_list
-
 from .zeroroles import ZeroProxy, ZeroPublisher, ZeroSubscriber 
 from .zeroroles import BROKER_PUBLISHER_PORT, BROKER_SUBSCRIBER_PORT, SERVER_ENDPOINT
 

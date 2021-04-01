@@ -1,11 +1,22 @@
 h1 ./zooscripts/restartzoo.sh
 h2 ./load.py &
+h2 sleep 2
 h3 ./proxy.py BROKER &
-h1 sleep 5
+h3 sleep 2
 h4 ./publisher.py 12345 BROKER &
-h1 sleep 1
+h4 sleep 2
 h5 ./subscriber.py 12345 BROKER &
-h1 sleep 1
+h5 sleep 2
 h6 ./proxy.py BROKER &
-h1 sleep 1
-
+h6 sleep 2
+h7 ./publisher.py 54321 BROKER &
+h7 sleep 2
+h8 ./subscriber.py 54321 BROKER &
+h8 sleep 2
+h9 ./proxy.py BROKER &
+h9 sleep 2
+h10 ./publisher.py 66666 BROKER &
+h10 sleep 2
+h11 ./subscriber.py 66666 BROKER &
+h2 sleep 5
+h9 sleep 5

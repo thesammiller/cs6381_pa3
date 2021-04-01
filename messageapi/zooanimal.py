@@ -1,9 +1,12 @@
 #
 # Team 6
-# Programming Assignment #2
+# Programming Assignment #3
 #
 # Contents:
 #    - ZooAnimal
+#    - ZooLoad
+#    - ZooProxy
+#    - ZooClient
 #
 
 import codecs
@@ -57,6 +60,7 @@ class ZooAnimal:
         #self.election = None
         self.election = self.zk.Election('/broker', self.ipaddress)
         self.zk_seq_id = None
+        self.zk_is_a_master = False
 
     def zookeeper_watcher(self, watch_path):
         @self.zk.DataWatch(watch_path)
@@ -69,11 +73,13 @@ class ZooAnimal:
                 #self.election.cancel()
 
     def zookeeper_master(self):
-        print("Becoming a master.")
-        role_topic = ZOOKEEPER_PATH_STRING.format(role=self.role, topic='master')
-        encoded_ip = codecs.encode(self.ipaddress, "utf-8")
-        self.zk.create(role_topic, ephemeral=True, makepath=True, sequence=True, value=encoded_ip)
-        return True
+        if not self.zk_is_a_master:
+            print("Becoming a master.")
+            role_topic = ZOOKEEPER_PATH_STRING.format(role=self.role, topic='master')
+            encoded_ip = codecs.encode(self.ipaddress, "utf-8")
+            self.zk.create(role_topic, ephemeral=True, makepath=True, sequence=True, value=encoded_ip)
+            self.zk_is_a_master = True
+        return self.zk_is_a_master
 
     def zookeeper_register(self):
         pass

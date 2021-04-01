@@ -1,12 +1,8 @@
 #
 # Team 6
-# Programming Assignment #2
+# Programming Assignment #3
 #
 # Contents:
-#   - BrokerProxy
-#   - BrokerPublisher
-#   - BrokerSubscriber
-#
 #   - FloodProxy
 #   - FloodPublisher
 #   - FloodSubscriber

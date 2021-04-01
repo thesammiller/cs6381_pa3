@@ -1,28 +1,20 @@
 #
 # Team 6
-# Programming Assignment #2
+# Programming Assignment #3
 #
 # Contents:
-#   - BrokerProxy
-#   - BrokerPublisher
-#   - BrokerSubscriber
+#   - ZeroLoad
+#   - ZeroProxy
+#   - ZeroClient
+#   - ZeroPublisher
+#   - ZeroSubscriber
 #
-#   - FloodProxy
-#   - FloodPublisher
-#   - FloodSubscriber
 
-# Standard Library
 import codecs
-from collections import defaultdict
-import json
-import sys
 import time
 
-# Third Party
 import zmq
 
-# Local
-from .util import local_ip4_addr_list
 from .zooanimal import ZooLoad, ZooProxy, ZooClient
 
 BROKER_PUBLISHER_PORT = "5556"
@@ -84,6 +76,9 @@ class ZeroLoad(ZooLoad):
                 print(master_data)
                 if master_data is not None and master_data != []:
                     self.masters = master_data
+                    print("################################################################")
+                    print(self.masters)
+                    print("################################################################")
                     #TODO: Better algorithm for choosing the primary broker
                     return self.masters[0]
                 else:
@@ -114,7 +109,7 @@ class ZeroProxy(ZooProxy):
         self.number_of_masters = self.get_master_count_from_load_balancer()
         brokers = self.zk.get_children("/broker")
         masters = len([b for b in brokers if "master" in b])
-        if masters < int(self.number_of_masters):
+        if masters < int(self.number_of_masters) and not self.zk_is_a_master:
             self.zookeeper_master()
 
     def setup_sockets(self):
@@ -154,6 +149,7 @@ class ZeroProxy(ZooProxy):
                     print("MASTER COUNT -> {}".format(reply))
                     return reply
             time.sleep(0.2)
+            return 0
 
 #############################
 #
@@ -174,10 +170,10 @@ class ZeroClient(ZooClient):
         while self.master_znode is None:
             self.master_znode = self.get_broker_from_load_balancer()
             time.sleep(0.1)
-        # TODO: What we get back from the load balancer, is the name of the master we want
+        #Broker gives us the name of the node we need to use as our master
         print("BROKER ZNODE --> {}".format(self.master_znode))
         path = "/broker/" + self.master_znode
-        # TODO: We then zk.get('/path/to/master0000000001') and that's how we get our ip address
+        # We then zk.get('/path/to/master0000000001') and that's how we get our ip address
         m_broker = self.zk.get(path, watch=self.broker_update)
         print("BROKER IP --> {}".format(m_broker))  # here is where we're going to get the ip address
         self.broker = codecs.decode(m_broker[0], "utf-8")

@@ -9,15 +9,8 @@ import codecs
 from collections import defaultdict
 from math import floor
 from pprint import pprint as print
-import json
-import sys
-import time
 
-# Third Party
 import zmq
-
-# Local
-from .util import local_ip4_addr_list
 
 from .zeroroles import ZeroLoad, SERVER_ENDPOINT, LOAD_BALANCE_PORT
 
@@ -26,10 +19,7 @@ PUBLISHER = "publisher"
 SUBSCRIBER = "subscriber"
 
 NO_REGISTERED_ENTRIES = ""
-LOAD_THRESHOLD = 2
-
-
-
+LOAD_THRESHOLDS = [2, 4]
 
 
 ###############################################################
@@ -52,6 +42,7 @@ class LoadProxy(ZeroLoad):
         self.registry["masters"] = defaultdict(list)
         self.setup_sockets()
         self.master_count = 1
+        self.threshold_index = 0
 
     def setup_sockets(self):
         print("Setup sockets")
@@ -66,8 +57,8 @@ class LoadProxy(ZeroLoad):
         while True:
             print("Listen - Check registry - Check Load")
             self.listen()
-            self.checkRegistry()
-            self.checkLoad()
+            self.check_registry()
+            self.check_load()
 
     def listen(self):
         print("Listening")
@@ -85,11 +76,8 @@ class LoadProxy(ZeroLoad):
             # based on our role, we need to find the companion ip addresses in the registry
             if role == 'publisher' or role == 'subscriber':
                 broker = self.get_primary_broker()
-                print(broker)
-                print(type(broker))
             if role == 'broker':
                 broker = str(self.master_count)
-
             self.incoming_socket.send_string(broker)
 
     def update_registry(self, path):
@@ -98,26 +86,33 @@ class LoadProxy(ZeroLoad):
         for entry in children:
             data = self.zk.get(path + '/{}'.format(entry))[0]
             decoded_data = codecs.decode(data, 'utf-8')
-            print("{path} -> {data}".format(path=path, data=decoded_data))
+            print("{path} -> {data}".format(path=path+"/"+entry, data=decoded_data))
             list_of_addresses = decoded_data.split()
             # path[1:] -> /publisher becomes publisher; /subscriber becomes subscriber
             key = path[1:]
             self.registry[path[1:]][entry] = list_of_addresses
 
-    def checkRegistry(self):
+    def check_registry(self):
         print("Checking registry...")
         # get all the /flood/subscriber children
         self.update_registry("/subscriber")
         self.update_registry("/publisher")
         self.update_registry('/broker')
 
-    def checkLoad(self):
-        if len(self.registry[SUBSCRIBER]) + len(self.registry[PUBLISHER]) > LOAD_THRESHOLD:
+    def check_load(self):
+        print(len(self.registry[SUBSCRIBER]))
+        if len(self.registry[SUBSCRIBER]) + len(self.registry[PUBLISHER]) > LOAD_THRESHOLDS[self.threshold_index]:
             print("Rebalancing")
             self.rebalance()
+            self.threshold_index +=1
+            if self.threshold_index >= len(LOAD_THRESHOLDS):
+                self.threshold_index = len(LOAD_THRESHOLDS)-1
 
     def rebalance(self):
-        self.master_count = floor(len(self.registry[SUBSCRIBER]) + len(self.registry[PUBLISHER])/LOAD_THRESHOLD)
+        if self.master_count >= 3:
+            return
+        #else if master_count < 3
+        self.master_count += 1
         print("Rebalancing threshold hit...")
         list_of_pubs = self.registry[PUBLISHER].keys()
         list_of_subs = self.registry[SUBSCRIBER].keys()
