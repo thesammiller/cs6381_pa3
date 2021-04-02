@@ -158,8 +158,8 @@ class ZeroProxy(ZooProxy):
 #############################
 
 class ZeroClient(ZooClient):
-    def __init__(self, topic):
-        super().__init__()
+    def __init__(self, topic, history):
+        super().__init__(history)
         self.topic = topic
         self.context = zmq.Context()
         self.port = 0
@@ -264,8 +264,8 @@ class ZeroClient(ZooClient):
 ##########################
 
 class ZeroPublisher(ZeroClient):
-    def __init__(self, topic):
-        super().__init__(topic)
+    def __init__(self, topic, history):
+        super().__init__(topic, history)
         self.role = 'publisher'
         self.port = BROKER_PUBLISHER_PORT
         self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker, port=self.port)
@@ -280,8 +280,8 @@ class ZeroPublisher(ZeroClient):
 ###########################
 
 class ZeroSubscriber(ZeroClient):
-    def __init__(self, topic):
-        super().__init__(topic)
+    def __init__(self, topic, history):
+        super().__init__(topic, history)
         self.role = 'subscriber'
         self.port = BROKER_SUBSCRIBER_PORT
         self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker, port=self.port)

@@ -10,6 +10,7 @@
 #
 
 import codecs
+import json
 import time
 import threading
 
@@ -155,34 +156,51 @@ class ZooProxy(ZooAnimal):
 
 
 class ZooClient(ZooAnimal):
-    def __init__(self):
+    def __init__(self, history):
         super().__init__()
+        self.ownership = None
+        self.history = history
+
+    '''
+    {
+        {'publishers': [{'ip': 10.0.0.3, 'history': 5, 'ownership': 1}] }
+    } 
+    '''
 
     def zookeeper_register(self):
-        role_topic = ZOOKEEPER_PATH_STRING.format(role=self.role, topic=self.topic)
-        # zk.ensure_path checks if path exists, and if not it creates it
+        #this would check /publisher/12345
+        #/12345/role00000001 --> everyone will get their own node with their ip address
+        #/12345 --> this will have the json in it
+        topic_role = ZOOKEEPER_PATH_STRING.format(role=self.topic, topic=self.role)
+        self.zk.create(topic_role, ephemeral=True, makepath=True, sequence=True, value=codecs.encode(self.ipaddress, 'utf-8'))
+        topic = "/"+self.topic
         try:
-            self.zk.create(role_topic, ephemeral=True, makepath=True)
+            json_data = self.zk.get(topic)
+            decoded_data = codecs.decode(json_data[0], 'utf-8')
         except:
-            print("Topic already exists.")
-
-        # get the string from the path - if it's just created, it will be empty
-        # if it was created earlier, there should be other ip addresses
-        other_ips = self.zk.get(role_topic)
-
-        # Zookeeper uses byte strings --> b'I'm a byte string'
-        # We don't like that and need to convert it
-        other_ips = codecs.decode(other_ips[0], 'utf-8')
-
-        # if we just created the path, it will be an empty byte string
-        # if it's empty, this will be true and we'll add our ip to the end of the other ips
-        if other_ips != '':
-            print("Adding to the topics list")
-            self.zk.set(role_topic, codecs.encode(other_ips + ' ' + self.ipaddress, 'utf-8'))
-        # else the byte string is empty and we can just send our ip_address
-        else:
-            self.zk.set(role_topic, codecs.encode(self.ipaddress, 'utf-8'))
-
-
+            self.zk.create(topic, ephemeral=True, makepath=True)
+            decoded_data = ''
+        #if decoded_data = '' then we are the first
+        json_template = {}
+        if decoded_data == '':
+            #no pub or sub registered
+            self.ownership = 1
+            json_template[self.role] = [ {'ip': self.ipaddress, 'history': self.history, 'ownership': self.ownership } ]
+        if decoded_data:
+            # json loads from string to python dictionary
+            json_template = json.loads(decoded_data)
+            if not json_template.get(self.role):
+                self.ownership = 1
+                json_template[self.role] = [{'ip': self.ipaddress, 'history': self.history, 'ownership': self.ownership}]
+            else:
+                role_players = json_template[self.role]
+                highest_owner = max(role_players, key=lambda player: player['ownership'])
+                self.ownership = highest_owner['ownership'] + 1
+                our_data = {'ip': self.ipaddress, 'history': self.history, 'ownership': self.ownership }
+                json_template[self.role].append(our_data)
+        #json.dumps --> "dump to string" so our dictionary becomes a string
+        json_string = json.dumps(json_template)
+        encoded_json = codecs.encode(json_string, 'utf-8')
+        self.zk.set(topic, encoded_json)
 
 

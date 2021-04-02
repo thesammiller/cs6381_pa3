@@ -86,8 +86,8 @@ class BrokerProxy(ZeroProxy):
 ##############################################################
 
 class BrokerPublisher(ZeroPublisher):
-    def __init__(self, topic):
-        super().__init__(topic)
+    def __init__(self, topic, history):
+        super().__init__(topic, history)
     
     def register(self):
         self.register_pub()
@@ -116,9 +116,9 @@ class BrokerPublisher(ZeroPublisher):
 
 
 class BrokerSubscriber(ZeroSubscriber):
-    def __init__(self, topic):
+    def __init__(self, topic, history):
         # ZooAnimal initialize
-        super().__init__(topic)
+        super().__init__(topic, history)
         self.setup_sockets()
 
     def setup_sockets(self):

@@ -95,12 +95,14 @@ class LoadProxy(ZeroLoad):
     def check_registry(self):
         print("Checking registry...")
         # get all the /flood/subscriber children
-        self.update_registry("/subscriber")
-        self.update_registry("/publisher")
-        self.update_registry('/broker')
+        #TODO: Fix registry given new pub/sub zookeeper register
+        #self.update_registry("/subscriber")
+        #self.update_registry("/publisher")
+        #self.update_registry('/broker')
 
     def check_load(self):
-        print(len(self.registry[SUBSCRIBER]))
+        # sub_topics = self.registry[SUBSCRIBER]
+        # sub_scribers = sum(sub_topics)
         if len(self.registry[SUBSCRIBER]) + len(self.registry[PUBLISHER]) > LOAD_THRESHOLDS[self.threshold_index]:
             print("Rebalancing")
             self.rebalance()
