@@ -173,7 +173,7 @@ class ZooClient(ZooAnimal):
         #/12345 --> this will have the json in it
         topic_role = ZOOKEEPER_PATH_STRING.format(role=self.topic, topic=self.role)
         self.zk.create(topic_role, ephemeral=True, makepath=True, sequence=True, value=codecs.encode(self.ipaddress, 'utf-8'))
-        topic = "/"+self.topic
+        topic = "/topic/"+self.topic
         try:
             json_data = self.zk.get(topic)
             decoded_data = codecs.decode(json_data[0], 'utf-8')

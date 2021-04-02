@@ -7,6 +7,7 @@
 
 import codecs
 from collections import defaultdict
+import json
 from math import floor
 from pprint import pprint as print
 
@@ -35,11 +36,11 @@ class LoadProxy(ZeroLoad):
         self.topic = 'balance'
         super().__init__()
         # Initialize Registry
-        self.registry = {}
-        self.registry[BROKER] = defaultdict(list)
-        self.registry[PUBLISHER] = defaultdict(list)
-        self.registry[SUBSCRIBER] = defaultdict(list)
-        self.registry["masters"] = defaultdict(list)
+        self.registry = defaultdict(lambda: defaultdict(list))
+        #self.registry[BROKER] = defaultdict(list)
+        #self.registry[PUBLISHER] = defaultdict(list)
+        #self.registry[SUBSCRIBER] = defaultdict(list)
+        #self.registry["masters"] = defaultdict(list)
         self.setup_sockets()
         self.master_count = 1
         self.threshold_index = 0
@@ -80,7 +81,18 @@ class LoadProxy(ZeroLoad):
                 broker = str(self.master_count)
             self.incoming_socket.send_string(broker)
 
-    def update_registry(self, path):
+    def update_client_registry(self, path):
+        print("Updating pub-sub registry...")
+        children = self.zk.get_children(path)
+        for entry in children:
+            data = self.zk.get(path + '/{}'.format(entry))[0]
+            decoded_data = codecs.decode(data, 'utf-8')
+            print("{path} -> {data}".format(path=path+"/"+entry, data=decoded_data))
+            data = json.loads(decoded_data)
+            # path[1:] -> /publisher becomes publisher; /subscriber becomes subscriber
+            self.registry[path[1:]][entry] = data
+
+    def update_broker_registry(self, path):
         print("Updating registry...")
         children = self.zk.get_children(path)
         for entry in children:
@@ -95,10 +107,8 @@ class LoadProxy(ZeroLoad):
     def check_registry(self):
         print("Checking registry...")
         # get all the /flood/subscriber children
-        #TODO: Fix registry given new pub/sub zookeeper register
-        #self.update_registry("/subscriber")
-        #self.update_registry("/publisher")
-        #self.update_registry('/broker')
+        self.update_client_registry("/topic")
+        self.update_broker_registry('/broker')
 
     def check_load(self):
         # sub_topics = self.registry[SUBSCRIBER]
