@@ -8,10 +8,11 @@ from messageapi.flood import FloodSubscriber
 system = {"FLOOD": FloodSubscriber,
           "BROKER": BrokerSubscriber}
 
+
 class WeatherSubscriber:
 
-    def __init__(self, topic, api):
-        self.sub = system[api](topic)
+    def __init__(self, topic=None, history=None, api=None):
+        self.sub = system[api](topic, history)
         self.topic = topic
         self.sub.register_sub()
 
@@ -30,6 +31,7 @@ def main():
 
     topic_filter = sys.argv[1] if len(sys.argv) > 1 else "90210"
     api = sys.argv[2] if len(sys.argv) > 2 else "BROKER"
+    history = sys.argv[3] if len(sys.argv) > 3 else "5"
     
     if api not in system:
         print("Usage error -- message API can either be FLOOD or BROKER")
@@ -38,10 +40,10 @@ def main():
         print("Usage error -- topic must be a zipcode (all numbers, 5 total).")
         sys.exit(-1)
 
-        
-    ws = WeatherSubscriber(topic_filter, api)
+    ws = WeatherSubscriber(topic=topic_filter, history=history, api=api)
     while True:
         ws.run()
+
 
 if __name__ == "__main__":
     main()

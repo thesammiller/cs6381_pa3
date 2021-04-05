@@ -48,7 +48,6 @@ class ZeroLoad(ZooLoad):
         #ZMQ Setup
         self.context = zmq.Context()
         self.poller = zmq.Poller()
-        self.zookeeper_register()
 
     def setup_sockets(self):
         pass
@@ -102,7 +101,6 @@ class ZeroProxy(ZooProxy):
         #ZMQ Setup
         self.context = zmq.Context()
         self.poller = zmq.Poller()
-        self.zookeeper_register()
         self.number_of_masters = self.get_master_count_from_load_balancer()
 
     def check_master_count(self):
@@ -158,9 +156,8 @@ class ZeroProxy(ZooProxy):
 #############################
 
 class ZeroClient(ZooClient):
-    def __init__(self, topic, history):
-        super().__init__(history)
-        self.topic = topic
+    def __init__(self, role=None, topic=None, history=None):
+        super().__init__(role=role, topic=topic, history=history)
         self.context = zmq.Context()
         self.port = 0
         self.socket = None
@@ -264,12 +261,10 @@ class ZeroClient(ZooClient):
 ##########################
 
 class ZeroPublisher(ZeroClient):
-    def __init__(self, topic, history):
-        super().__init__(topic, history)
-        self.role = 'publisher'
+    def __init__(self, topic=None, history=None):
+        super().__init__(role="publisher", topic=topic, history=history)
         self.port = BROKER_PUBLISHER_PORT
         self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker, port=self.port)
-        self.zookeeper_register()
         self.broker = self.get_broker()
 
 
@@ -280,12 +275,11 @@ class ZeroPublisher(ZeroClient):
 ###########################
 
 class ZeroSubscriber(ZeroClient):
-    def __init__(self, topic, history):
-        super().__init__(topic, history)
+    def __init__(self, topic=None, history=None):
+        super().__init__(role="subscriber", topic=topic, history=history)
         self.role = 'subscriber'
         self.port = BROKER_SUBSCRIBER_PORT
         self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker, port=self.port)
-        self.zookeeper_register()
         self.broker = self.get_broker()
 
 

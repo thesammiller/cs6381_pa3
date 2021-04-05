@@ -101,9 +101,9 @@ class FloodProxy(ZeroProxy):
 
 class FloodPublisher(ZeroPublisher):
 
-    def __init__(self, topic):
+    def __init__(self, topic=None, history=None):
         # Initialize ZooAnimal
-        super().__init__(topic)
+        super().__init__(topic=topic, history=history)
         # ZooAnimal Properties
         self.zk_path = ZOOKEEPER_PATH_STRING.format(role=self.role, topic=self.topic)
         # ZMQ Setup
@@ -139,9 +139,9 @@ class FloodPublisher(ZeroPublisher):
 ####################################################################################################################
 
 class FloodSubscriber(ZeroSubscriber):
-    def __init__(self, topic):
+    def __init__(self, topic=None, history=None):
         # Initialize ZooAnimal
-        super().__init__(topic)
+        super().__init__(topic=topic, history=history)
         # ZooAnimal Properties
         self.zk_path = ZOOKEEPER_PATH_STRING.format(role=self.role, topic=self.topic)
         # ZMQ Setup

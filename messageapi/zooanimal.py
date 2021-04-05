@@ -156,10 +156,13 @@ class ZooProxy(ZooAnimal):
 
 
 class ZooClient(ZooAnimal):
-    def __init__(self, history):
+    def __init__(self, role=None, topic=None, history=None):
         super().__init__()
-        self.ownership = None
+        self.role = role
+        self.topic = topic
         self.history = history
+        self.zookeeper_register()
+        self.ownership = self.get_ownership()
 
     '''
     {
@@ -171,9 +174,9 @@ class ZooClient(ZooAnimal):
         #this would check /publisher/12345
         #/12345/role00000001 --> everyone will get their own node with their ip address
         #/12345 --> this will have the json in it
-        topic_role = ZOOKEEPER_PATH_STRING.format(role=self.topic, topic=self.role)
+        topic = "topic/" + self.topic
+        topic_role = ZOOKEEPER_PATH_STRING.format(role=topic, topic=self.role)
         self.zk.create(topic_role, ephemeral=True, makepath=True, sequence=True, value=codecs.encode(self.ipaddress, 'utf-8'))
-        topic = "/topic/"+self.topic
         try:
             json_data = self.zk.get(topic)
             decoded_data = codecs.decode(json_data[0], 'utf-8')
@@ -193,9 +196,10 @@ class ZooClient(ZooAnimal):
                 self.ownership = 1
                 json_template[self.role] = [{'ip': self.ipaddress, 'history': self.history, 'ownership': self.ownership}]
             else:
-                role_players = json_template[self.role]
-                highest_owner = max(role_players, key=lambda player: player['ownership'])
-                self.ownership = highest_owner['ownership'] + 1
+                #role_players = json_template[self.role]
+                #highest_owner = max(role_players, key=lambda player: player['ownership'])
+                #self.ownership = highest_owner['ownership'] + 1
+                self.ownership = self.get_ownership()
                 our_data = {'ip': self.ipaddress, 'history': self.history, 'ownership': self.ownership }
                 json_template[self.role].append(our_data)
         #json.dumps --> "dump to string" so our dictionary becomes a string
@@ -203,4 +207,13 @@ class ZooClient(ZooAnimal):
         encoded_json = codecs.encode(json_string, 'utf-8')
         self.zk.set(topic, encoded_json)
 
+    def get_ownership(self):
+        topic = "/topic/" + self.topic
+        topic_clients = self.zk.get(topic)
+        topic_string = codecs.decode(topic_clients[0], "utf-8")
+        topic_json = json.loads(topic_string)
+        role_players = topic_json[self.role]
+        highest_owner = max(role_players, key=lambda player: player['ownership'])
+        self.ownership = highest_owner['ownership'] + 1
+        return self.ownership
 

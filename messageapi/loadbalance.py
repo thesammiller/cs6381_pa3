@@ -35,12 +35,8 @@ class LoadProxy(ZeroLoad):
         self.role = 'load'
         self.topic = 'balance'
         super().__init__()
-        # Initialize Registry
+        # Initialize Registry -- if there is a key error, it will create a dictionary that creates lists
         self.registry = defaultdict(lambda: defaultdict(list))
-        #self.registry[BROKER] = defaultdict(list)
-        #self.registry[PUBLISHER] = defaultdict(list)
-        #self.registry[SUBSCRIBER] = defaultdict(list)
-        #self.registry["masters"] = defaultdict(list)
         self.setup_sockets()
         self.master_count = 1
         self.threshold_index = 0
@@ -77,6 +73,7 @@ class LoadProxy(ZeroLoad):
             # based on our role, we need to find the companion ip addresses in the registry
             if role == 'publisher' or role == 'subscriber':
                 broker = self.get_primary_broker()
+                #ownership = self.registry[role][topic].index(ipaddr)
             if role == 'broker':
                 broker = str(self.master_count)
             self.incoming_socket.send_string(broker)
