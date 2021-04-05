@@ -10,8 +10,8 @@ system = {"FLOOD": FloodSubscriber,
 
 class WeatherSubscriber:
 
-    def __init__(self, topic, api):
-        self.sub = system[api](topic)
+    def __init__(self, topic, api, history):
+        self.sub = system[api](topic, history)
         self.topic = topic
         self.sub.register_sub()
 
@@ -39,7 +39,7 @@ def main():
         sys.exit(-1)
 
         
-    ws = WeatherSubscriber(topic_filter, api)
+    ws = WeatherSubscriber(topic_filter, api, history)
     while True:
         ws.run()
 

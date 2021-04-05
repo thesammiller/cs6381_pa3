@@ -1,0 +1,27 @@
+test plan: 
+
+1) test pubs/subs evenly distributed among 2 brokers once the threshold is reached
+2) test pubs/subs evently distributed among 3 brokers once the threshold is reached
+3) test pubs/subs realign by going over the threshold and then going back down 
+
+
+for pub/sub: 
+# pub with highest ownership but lower history 
+publisher.py 12345 BROKER 5 # should have higher ownership because created first
+publisher.py 12345 BROKER 10 # less ownership
+
+
+# subs requiring diff history
+subscriber.py 12345 BROKER 4
+subscriber.py 12345 BROKER 7 #also check that pub chops the extra history off so sub only receives the asked for amount 
+
+#kill the pub with the highest ownership to check that the first sub is reassigned 
+
+
+
+
+
+
+
+
+
