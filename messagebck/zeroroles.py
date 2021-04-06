@@ -11,6 +11,7 @@
 #
 
 import codecs
+import json
 import time
 
 import zmq
@@ -128,7 +129,8 @@ class ZeroProxy(ZooProxy):
                 message['topic'] = self.topic
                 message['ipaddr'] = self.ipaddress
                 # role=self.role, topic=self.topic, ipaddr=self.ipaddress
-                hello_message = "{role} {topic} {ipaddr}".format(**message)
+                #hello_message = "{role} {topic} {ipaddr}".format(**message)
+                hello_message = json.dumps(message)
 
                 hello_socket = self.context.socket(zmq.REQ)
                 print(self.broker)
@@ -180,6 +182,7 @@ class ZeroClient(ZooClient):
     def get_broker_from_load_balancer(self):
         for i in range(10):
             balances = self.zk.get_children(PATH_TO_LOAD_BALANCER)
+            print(balances)
             if balances:
                 load_balancer = balances[0]
                 load_balance_path = PATH_TO_LOAD_BALANCER + "/" + load_balancer
@@ -189,7 +192,8 @@ class ZeroClient(ZooClient):
                 message['topic'] = self.topic
                 message['ipaddr'] = self.ipaddress
                 # role=self.role, topic=self.topic, ipaddr=self.ipaddress
-                hello_message = "{role} {topic} {ipaddr}".format(**message)
+                hello_message = json.dumps(message)
+                #hello_message = "{role} {topic} {ipaddr}".format(**message)
 
                 hello_socket = self.context.socket(zmq.REQ)
                 print(self.broker)
@@ -223,20 +227,23 @@ class ZeroClient(ZooClient):
             time.sleep(0.5)
 
     #children should use this as shell for register method
-    def register(self):
+    def register_broker(self):
         print("{} - > Registering {} to address {}".format(self.zk_path, self. role, self.broker))
+
         # Create handshake message for the Flood Proxy
         message = {}
         message['role'] = self.role
         message['topic'] = self.topic
         message['ipaddr'] = self.ipaddress
-        hello_message = "{role} {topic} {ipaddr}".format(**message)
+        hello_message = json.dumps(message)
+
         # Send to the proxy
         hello_socket = self.context.socket(zmq.REQ)
-        print(self.broker)
+        print("Registering with the broker")
         connect_str = SERVER_ENDPOINT.format(address=self.broker, port=FLOOD_PROXY_PORT)
         hello_socket.connect(connect_str)
         hello_socket.send_string(hello_message)
+
         # Wait for return message
         event = hello_socket.poll(timeout=3000)  # wait 3 seconds
         if event == 0:
@@ -245,7 +252,7 @@ class ZeroClient(ZooClient):
         else:
         #    events queued within our time limit
             reply = hello_socket.recv_string(flags=zmq.NOBLOCK)
-            print(reply)
+            print("REGISTER BROKER --> {}".format(reply))
             if reply != NO_REGISTERED_ENTRIES:
                 self.registry = reply.split()
                 print("{zk_path} -> Received new registry: {registry}".format(zk_path=self.zk_path,
@@ -266,6 +273,7 @@ class ZeroPublisher(ZeroClient):
         self.port = BROKER_PUBLISHER_PORT
         self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker, port=self.port)
         self.broker = self.get_broker()
+        print("Zero Publisher")
 
 
 #############################

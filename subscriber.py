@@ -21,18 +21,20 @@ class WeatherSubscriber:
         total_temp = 0
         for update_nbr in range(5):
             string = self.sub.notify()
-            #print("Suscriber Application got message.")
+            print("Suscriber Application got message.")
             temperature, relhumidity = string.split(" ")
             total_temp += int(temperature)
-            
-        print("Average temperature for zipcode '%s' was %dF" % (self.topic, total_temp / (update_nbr+1)))
+
+        print("Average temperature for zipcode '%s' was %dF" %
+              (self.topic, total_temp / (update_nbr+1)))
+
 
 def main():
 
     topic_filter = sys.argv[1] if len(sys.argv) > 1 else "90210"
     api = sys.argv[2] if len(sys.argv) > 2 else "BROKER"
     history = sys.argv[3] if len(sys.argv) > 3 else "5"
-    
+
     if api not in system:
         print("Usage error -- message API can either be FLOOD or BROKER")
         sys.exit(-1)
@@ -47,6 +49,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-

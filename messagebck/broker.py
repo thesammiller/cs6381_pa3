@@ -17,15 +17,14 @@ import time
 import zmq
 
 from .util import local_ip4_addr_list
-from .zeroproxies import ZeroProxy
-from .zeroclients import ZeroPublisher, ZeroSubscriber
-from .zeroproxies import BROKER_PUBLISHER_PORT, BROKER_SUBSCRIBER_PORT, SERVER_ENDPOINT
+from .zeroroles import ZeroProxy, ZeroPublisher, ZeroSubscriber 
+from .zeroroles import BROKER_PUBLISHER_PORT, BROKER_SUBSCRIBER_PORT, SERVER_ENDPOINT
 
 
 ##################################################################################
 #
 #
-#           B R O K E R   P R O X Y
+#           B R O K E R   P R O X Y 
 #
 #
 ####################################################################################
@@ -36,23 +35,22 @@ class BrokerProxy(ZeroProxy):
         self.sockets = {}
         # Socket data maps to opposite port to X sockets (XPub, XSub)
         self.sockets_data = {"Subscriber": BROKER_PUBLISHER_PORT,
-                             "Publisher": BROKER_SUBSCRIBER_PORT}
+                            "Publisher": BROKER_SUBSCRIBER_PORT}
         self.setup_sockets()
         self.events = None
 
     def setup_sockets(self):
         for role, port in self.sockets_data.items():
             print("{} socket created.".format(role))
-            # Based on the port being publisher odd, subscriber even
+            #Based on the port being publisher odd, subscriber even
             zmq_socket = zmq.XPUB if (int(port) % 2) else zmq.XSUB
             self.sockets[role] = self.context.socket(zmq_socket)
             # Publisher gets an additional method Subscriber does not
             if zmq_socket == zmq.XPUB:
                 self.sockets[role].setsockopt(zmq.XPUB_VERBOSE, 1)
-            self.sockets[role].bind(
-                SERVER_ENDPOINT.format(address="*", port=port))
+            self.sockets[role].bind(SERVER_ENDPOINT.format(address="*", port=port))
             self.poller.register(self.sockets[role], zmq.POLLIN)
-
+    
     def run(self):
         while True:
             try:
@@ -66,7 +64,7 @@ class BrokerProxy(ZeroProxy):
         self.events = dict(self.poller.poll(1000))
         print("Events received = {}".format(self.events))
         for role, socket in self.sockets.items():
-            # For each socket, get data
+            #For each socket, get data
             self.get_socket_data(role)
 
     def get_socket_data(self, role):
@@ -90,7 +88,7 @@ class BrokerProxy(ZeroProxy):
 class BrokerPublisher(ZeroPublisher):
     def __init__(self, topic=None, history=None):
         super().__init__(topic=topic, history=history)
-
+    
     def register(self):
         self.register_pub()
         self.register_broker()
@@ -99,7 +97,7 @@ class BrokerPublisher(ZeroPublisher):
         print("Publisher connecting to proxy at: {}".format(self.server_endpoint))
         self.socket = self.context.socket(zmq.PUB)
         self.socket.connect(self.server_endpoint)
-
+    
     def publish(self, data):
         message = {}
         message['topic'] = self.topic
@@ -108,7 +106,7 @@ class BrokerPublisher(ZeroPublisher):
         data = json.dumps(message)
         self.socket.send_string(data)
         print("Message API Sending: {} {}".format(self.topic, data))
-
+    
 
 ################################################################################
 #
@@ -141,7 +139,7 @@ class BrokerSubscriber(ZeroSubscriber):
     def notify(self):
         message = self.socket.recv_string()
         # Split message based on our format
-        # topic, pub_time, *values = message.split()
+        #topic, pub_time, *values = message.split()
         pub_data = json.loads(message)
         topic = pub_data['topic']
         pub_time = pub_data['time']
@@ -152,3 +150,5 @@ class BrokerSubscriber(ZeroSubscriber):
         with open("./logs/seconds_{}.log".format(self.ipaddress), "a") as f:
             f.write(str(difference) + "\n")
         return data
+
+

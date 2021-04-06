@@ -7,19 +7,20 @@ import os
 import time
 
 
-
 FILENAMES = [x for x in os.listdir('logs') if 'flood' in x]
 
 
 def build_data(filenames):
     filedata = {}
     for file in filenames:
-        df = pd.read_csv('logs/' + file, header=None, skiprows=15, engine = 'python', skipfooter = 10)
-        answer= df.std()
+        df = pd.read_csv('logs/' + file, header=None,
+                         skiprows=15, engine='python', skipfooter=10)
+        answer = df.std()
         print("The standard deviation is:")
         print (answer)
         filedata[file] = df
     return filedata
+
 
 def parse_ip(seconds_log):
     pieces = seconds_log.split('.')
@@ -27,6 +28,7 @@ def parse_ip(seconds_log):
     # print(pieces)
     host = pieces[3]
     return int(host)
+
 
 def main():
     data = build_data(FILENAMES)
@@ -55,7 +57,6 @@ def main():
     #dataSet = sorted(data.keys(), key=lambda x: parse_ip(x))
     plt.xticks(rotation=30)
 
-
     timestamp = str(round(time.time()))[-5:]
 
     fig.savefig('graphs/quantile_{}.png'.format(timestamp))
@@ -63,5 +64,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-

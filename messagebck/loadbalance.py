@@ -13,7 +13,7 @@ from pprint import pprint as print
 
 import zmq
 
-from .zeroproxies import ZeroLoad, SERVER_ENDPOINT, LOAD_BALANCE_PORT
+from .zeroroles import ZeroLoad, SERVER_ENDPOINT, LOAD_BALANCE_PORT
 
 BROKER = "broker"
 PUBLISHER = "publisher"
@@ -24,7 +24,9 @@ LOAD_THRESHOLDS = [2, 4]
 
 
 ###############################################################
-#  L O A D  P R O X Y
+#
+#            L O A D  P R O X Y
+#
 ################################################################
 
 class LoadProxy(ZeroLoad):
@@ -43,8 +45,7 @@ class LoadProxy(ZeroLoad):
         print("Setup sockets")
         self.incoming_socket = self.context.socket(zmq.REP)
         # creating a server bound to port 5555
-        self.incoming_socket.bind(SERVER_ENDPOINT.format(
-            address="*", port=LOAD_BALANCE_PORT))
+        self.incoming_socket.bind(SERVER_ENDPOINT.format(address="*", port=LOAD_BALANCE_PORT))
 
     # encloses basic functionality
     # is a difference in the file
@@ -57,13 +58,13 @@ class LoadProxy(ZeroLoad):
             self.check_load()
 
     def listen(self):
-        # print("Listening")
+        #print("Listening")
         event = self.incoming_socket.poll(timeout=3000)  # wait 3 seconds
         if event == 0:
             # timeout reached before any events were queued
             pass
         else:
-            # events queued within our time limit
+            #events queued within our time limit
             message = self.incoming_socket.recv_string()
             print("Message -> {}".format(message))
             #role, topic, ipaddr = self.message.split()
@@ -83,21 +84,7 @@ class LoadProxy(ZeroLoad):
 
     def update_client_registry(self, path):
         print("Updating pub-sub registry...")
-        topic_list = self.zk.get_children(path)
-        for topic in topic_list:
-            children = self.zk.get_children(path+'/'+topic)
-            for entry in children:
-                data = self.zk.get(path + '/{}'.format(entry))[0]
-                decoded_data = codecs.decode(data, 'utf-8')
-                list_of_addresses = decoded_data.split()
-                role = PUBLISHER if PUBLISHER in entry else SUBSCRIBER
-                self.registry[topic][role] = list_of_addresses
-
-
-    def update_broker_registry(self, path):
-        print("Updating registry...")
         children = self.zk.get_children(path)
-        print(children)
         for entry in children:
             data = self.zk.get(path + '/{}'.format(entry))[0]
             decoded_data = codecs.decode(data, 'utf-8')
@@ -105,6 +92,18 @@ class LoadProxy(ZeroLoad):
             data = json.loads(decoded_data)
             # path[1:] -> /publisher becomes publisher; /subscriber becomes subscriber
             self.registry[path[1:]][entry] = data
+
+    def update_broker_registry(self, path):
+        print("Updating registry...")
+        children = self.zk.get_children(path)
+        for entry in children:
+            data = self.zk.get(path + '/{}'.format(entry))[0]
+            decoded_data = codecs.decode(data, 'utf-8')
+            #print("{path} -> {data}".format(path=path+"/"+entry, data=decoded_data))
+            list_of_addresses = decoded_data.split()
+            # path[1:] -> /publisher becomes publisher; /subscriber becomes subscriber
+            key = path[1:]
+            self.registry[path[1:]][entry] = list_of_addresses
 
     def check_registry(self):
         print("Checking registry...")
@@ -118,25 +117,22 @@ class LoadProxy(ZeroLoad):
         if len(self.registry[SUBSCRIBER]) + len(self.registry[PUBLISHER]) > LOAD_THRESHOLDS[self.threshold_index]:
             print("Rebalancing")
             self.rebalance()
-            self.threshold_index += 1
+            self.threshold_index +=1
             if self.threshold_index >= len(LOAD_THRESHOLDS):
                 self.threshold_index = len(LOAD_THRESHOLDS)-1
 
     def rebalance(self):
         if self.master_count >= 3:
             return
-        # else if master_count < 3
+        #else if master_count < 3
         self.master_count += 1
         print("Rebalancing threshold hit...")
         list_of_pubs = self.registry[PUBLISHER].keys()
         list_of_subs = self.registry[SUBSCRIBER].keys()
-        pairs_of_topics = [
-            topic for topic in list_of_pubs if topic in list_of_subs]
+        pairs_of_topics = [topic for topic in list_of_pubs if topic in list_of_subs]
         # filter out pairs to leave list of pubs/subs without pairs
-        unpaired_pubs = [
-            topic for topic in list_of_pubs if topic not in pairs_of_topics]
-        unpaired_subs = [
-            topic for topic in list_of_subs if topic not in pairs_of_topics]
+        unpaired_pubs = [topic for topic in list_of_pubs if topic not in pairs_of_topics]
+        unpaired_subs = [topic for topic in list_of_subs if topic not in pairs_of_topics]
         # create index to divide the list of pairs in halves, rounded down
         dividing_index = floor(len(pairs_of_topics)/self.master_count)
         topics_data = pairs_of_topics[::]
@@ -145,7 +141,7 @@ class LoadProxy(ZeroLoad):
             pairs = topics_data[:dividing_index]
             topics_data = topics_data[dividing_index:]
             self.registry['masters'][master] = pairs
-            # print(self.registry)
+            #print(self.registry)
             ##################################
             # - brokers check in with load balancer when they're created
             # - get a number of masters back
@@ -165,3 +161,5 @@ class LoadProxy(ZeroLoad):
             # e.g. num_brokers++ instead of 2
 
             pass
+
+

@@ -8,7 +8,8 @@ from messageapi.broker import BrokerPublisher
 from messageapi.flood import FloodPublisher
 
 system = {"BROKER": BrokerPublisher,
-           "FLOOD" : FloodPublisher}
+          "FLOOD": FloodPublisher}
+
 
 class WeatherPublisher:
 
@@ -16,16 +17,17 @@ class WeatherPublisher:
         self.topic = topic
         self.pub = system[api](self.topic, history)
         self.pub.register_pub()
-        
+
     def generateWeather(self):
         temperature = randrange(-80, 135)
         relhumidity = randrange(10, 60)
         return "{} {}".format(temperature, relhumidity)
-        
+
     def weatherPublish(self):
         data = self.generateWeather()
         self.pub.publish("{data}".format(data=data))
-        print ("Application sending: {topic} {data}".format(topic=self.topic, data=data))
+        print ("Application sending: {topic} {data}".format(
+            topic=self.topic, data=data))
 
 
 def main():
@@ -41,11 +43,12 @@ def main():
     if not topic.isdigit() or len(topic) != 5:
         print("Usage error -- topic must be 5 digit zipcode.")
         sys.exit(-1)
-        
+
     wp = WeatherPublisher(topic=topic, history=history, api=api)
     while True:
         wp.weatherPublish()
         time.sleep(1)
+
 
 if __name__ == "__main__":
     main()

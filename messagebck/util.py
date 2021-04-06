@@ -17,7 +17,7 @@ def local_ip4_addr_list():
                                    0x8915,  # SIOCGIFADDR
                                    struct.pack('256s', name[:15].encode("UTF-8")))
         except OSError as e:
-            if e.errno == 99:  # EADDRNOTAVAIL
+            if e.errno == 99: # EADDRNOTAVAIL
                 print("Warning!",
                       "Interface: {}".format(name),
                       "IP address not available for interface.",
@@ -28,8 +28,7 @@ def local_ip4_addr_list():
 
         ip_addr = socket.inet_ntoa(ip_of_ni[20:24])
         nic.add(ip_addr)
-    return nic
-
+    return nic 
 
 def main():
     print(local_ip4_addr_list())

@@ -22,9 +22,8 @@ from .util import local_ip4_addr_list
 
 from .zooanimal import ZooAnimal, ZOOKEEPER_ADDRESS, ZOOKEEPER_PORT, ZOOKEEPER_PATH_STRING
 
-from .zeroproxies import ZeroProxy
-from .zeroclients import ZeroPublisher, ZeroSubscriber
-from .zeroclients import FLOOD_PROXY_PORT, FLOOD_SUBSCRIBER_PORT, SERVER_ENDPOINT
+from .zeroroles import ZeroProxy, ZeroPublisher, ZeroSubscriber 
+from .zeroroles import FLOOD_PROXY_PORT, FLOOD_SUBSCRIBER_PORT, SERVER_ENDPOINT
 
 FLOOD_PUBLISHER = "publisher"
 FLOOD_SUBSCRIBER = "subscriber"
@@ -51,8 +50,7 @@ class FloodProxy(ZeroProxy):
     def setup_sockets(self):
         self.incoming_socket = self.context.socket(zmq.REP)
         # creating a server bound to port 5555
-        self.incoming_socket.bind(SERVER_ENDPOINT.format(
-            address="*", port=FLOOD_PROXY_PORT))
+        self.incoming_socket.bind(SERVER_ENDPOINT.format(address="*", port=FLOOD_PROXY_PORT))
 
     # encloses basic functionality
     def run(self):
@@ -87,8 +85,7 @@ class FloodProxy(ZeroProxy):
             self.registry[path[1:]][entry] = list_of_addresses
 
     def checkRegistry(self):
-        # And we are the master.
-        if self.zk.get("/broker/master")[0] == codecs.encode(self.ipaddress, 'utf-8'):
+        if self.zk.get("/broker/master")[0] == codecs.encode(self.ipaddress, 'utf-8'): # And we are the master.
             # get all the /flood/subscriber children
             self.update_registry("/subscriber")
             self.update_registry("/publisher")
@@ -108,8 +105,7 @@ class FloodPublisher(ZeroPublisher):
         # Initialize ZooAnimal
         super().__init__(topic=topic, history=history)
         # ZooAnimal Properties
-        self.zk_path = ZOOKEEPER_PATH_STRING.format(
-            role=self.role, topic=self.topic)
+        self.zk_path = ZOOKEEPER_PATH_STRING.format(role=self.role, topic=self.topic)
         # ZMQ Setup
         self.context.setsockopt(zmq.LINGER, 10)
         # API Setup
@@ -126,12 +122,11 @@ class FloodPublisher(ZeroPublisher):
             print("{} -> Address {}".format(self.zk_path, ipaddr))
             seconds = time.time()
             self.socket = self.context.socket(zmq.REQ)
-            self.connect_str = SERVER_ENDPOINT.format(
-                address=ipaddr, port=FLOOD_SUBSCRIBER_PORT)
-            # print(self.connect_str)
+            self.connect_str = SERVER_ENDPOINT.format(address=ipaddr, port=FLOOD_SUBSCRIBER_PORT)
+            #print(self.connect_str)
             self.socket.connect(self.connect_str)
             self.message = "{time} {data}".format(time=seconds, data=data)
-            # print(self.message)
+            #print(self.message)
             self.socket.send_string(self.message)
             reply = self.socket.recv_string()
 
@@ -143,23 +138,20 @@ class FloodPublisher(ZeroPublisher):
 #
 ####################################################################################################################
 
-
 class FloodSubscriber(ZeroSubscriber):
     def __init__(self, topic=None, history=None):
         # Initialize ZooAnimal
         super().__init__(topic=topic, history=history)
         # ZooAnimal Properties
-        self.zk_path = ZOOKEEPER_PATH_STRING.format(
-            role=self.role, topic=self.topic)
+        self.zk_path = ZOOKEEPER_PATH_STRING.format(role=self.role, topic=self.topic)
         # ZMQ Setup
         self.setup_sockets()
 
     def setup_sockets(self):
         self.socket = self.context.socket(zmq.REP)
-        self.socket.bind(SERVER_ENDPOINT.format(
-            address="*", port=FLOOD_SUBSCRIBER_PORT))
+        self.socket.bind(SERVER_ENDPOINT.format(address="*", port=FLOOD_SUBSCRIBER_PORT))
 
-    # def register(self):
+    #def register(self):
     #    self.register_sub()
 
     def register_sub(self):
@@ -175,7 +167,6 @@ class FloodSubscriber(ZeroSubscriber):
         with open("logs/{ip}.log".format(ip=self.ipaddress), "a") as f:
             f.write(str(difference) + "\n")
 
-        print("{zk_path} -> Subscriber received data {data}".format(
-            zk_path=self.zk_path, data=" ".join(values)))
+        print("{zk_path} -> Subscriber received data {data}".format(zk_path=self.zk_path, data=" ".join(values)))
         self.socket.send_string(self.message)
         return " ".join(values)
