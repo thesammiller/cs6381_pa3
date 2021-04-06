@@ -14,20 +14,18 @@ import time
 import zmq
 
 from .zooanimal import ZooLoad, ZooProxy, ZooClient
-
-BROKER_PUBLISHER_PORT = "5556"
-BROKER_SUBSCRIBER_PORT = "5555"
-
-FLOOD_PROXY_PORT = "5555"
-FLOOD_SUBSCRIBER_PORT = "5556"
+from .zeroproxies import SERVER_ENDPOINT, BROKER_PUBLISHER_PORT, BROKER_SUBSCRIBER_PORT, FLOOD_PROXY_PORT, FLOOD_SUBSCRIBER_PORT
 
 LOAD_BALANCE_PORT = '6666'
 
-SERVER_ENDPOINT = "tcp://{address}:{port}"
 NO_REGISTERED_ENTRIES = ""
 
 PATH_TO_MASTER_BROKER = "/broker/master"
 PATH_TO_LOAD_BALANCER = "/load"
+
+PUBLISHER = "publisher"
+SUBSCRIBER = "subscriber"
+BROKER = "broker"
 
 #############################
 #
@@ -57,14 +55,13 @@ class ZeroClient(ZooClient):
         print("BROKER IP --> {}".format(m_broker))
         self.broker = codecs.decode(m_broker[0], "utf-8")
         self.broker = json.loads(self.broker)
-        self.server_endpoint = SERVER_ENDPOINT.format(
-            address=self.broker['ip'], port=self.port)
+        self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker['ip'], port=self.port)
         return self.broker
 
     def get_broker_from_load_balancer(self):
         for i in range(10):
             balances = self.zk.get_children(PATH_TO_LOAD_BALANCER)
-            print(balances)
+            print("LOAD BALANCERS -> {}".format(balances))
             if balances:
                 load_balancer = balances[0]
                 load_balance_path = PATH_TO_LOAD_BALANCER + "/" + load_balancer
@@ -78,10 +75,8 @@ class ZeroClient(ZooClient):
                 #hello_message = "{role} {topic} {ipaddr}".format(**message)
 
                 hello_socket = self.context.socket(zmq.REQ)
-                print(self.broker)
-                connect_str = SERVER_ENDPOINT.format(
-                    address=load_balance_address, port=LOAD_BALANCE_PORT)
-                print(connect_str)
+                connect_str = SERVER_ENDPOINT.format(address=load_balance_address, port=LOAD_BALANCE_PORT)
+                print("CONNECTING -> {}".format(connect_str))
                 hello_socket.connect(connect_str)
                 hello_socket.send_string(hello_message)
                 # Wait for return message
@@ -92,6 +87,7 @@ class ZeroClient(ZooClient):
                 else:
                     #    events queued within our time limit
                     reply = hello_socket.recv_string(flags=zmq.NOBLOCK)
+                    print("REPLY RECEIVED -> {}".format(reply))
                     return reply
             time.sleep(0.2)
 
@@ -111,29 +107,27 @@ class ZeroClient(ZooClient):
 
     # children should use this as shell for register method
     def register_broker(self):
-        print("{} - > Registering {} to address {}".format(self.zk_path,
-                                                           self. role, self.broker))
-
+        print("Registering {} to address {}".format(self.role, self.broker['ip']))
         # Create handshake message for the Flood Proxy
         message = {}
         message['role'] = self.role
         message['topic'] = self.topic
         message['ipaddr'] = self.ipaddress
         hello_message = json.dumps(message)
-
         # Send to the proxy
         hello_socket = self.context.socket(zmq.REQ)
         print("Registering with the broker")
-        connect_str = SERVER_ENDPOINT.format(
-            address=self.broker, port=FLOOD_PROXY_PORT)
+        print(hello_message)
+        connect_str = SERVER_ENDPOINT.format(address=self.broker['ip'], port=self.port)
         hello_socket.connect(connect_str)
         hello_socket.send_string(hello_message)
 
         # Wait for return message
-        event = hello_socket.poll(timeout=3000)  # wait 3 seconds
+        event = hello_socket.poll(timeout=10000)  # wait 3 seconds
         if event == 0:
             # timeout reached before any events were queued
-            pass
+            print("TIMEOUT IN RESPONSE")
+            raise Exception("No master.")
         else:
             #    events queued within our time limit
             reply = hello_socket.recv_string(flags=zmq.NOBLOCK)
@@ -157,9 +151,9 @@ class ZeroPublisher(ZeroClient):
     def __init__(self, topic=None, history=None):
         super().__init__(role="publisher", topic=topic, history=history)
         self.port = BROKER_PUBLISHER_PORT
-        self.server_endpoint = SERVER_ENDPOINT.format(
-            address=self.broker, port=self.port)
         self.broker = self.get_broker()
+        self.server_endpoint = SERVER_ENDPOINT.format(
+            address=self.broker['ip'], port=self.port)
         print("Zero Publisher")
 
 
@@ -174,6 +168,7 @@ class ZeroSubscriber(ZeroClient):
         super().__init__(role="subscriber", topic=topic, history=history)
         self.role = 'subscriber'
         self.port = BROKER_SUBSCRIBER_PORT
-        self.server_endpoint = SERVER_ENDPOINT.format(
-            address=self.broker, port=self.port)
         self.broker = self.get_broker()
+        self.server_endpoint = SERVER_ENDPOINT.format(
+            address=self.broker['ip'], port=self.port)
+

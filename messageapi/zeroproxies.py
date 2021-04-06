@@ -24,7 +24,7 @@ LOAD_BALANCE_PORT = '6666'
 SERVER_ENDPOINT = "tcp://{address}:{port}"
 NO_REGISTERED_ENTRIES = ""
 
-PATH_TO_MASTER_BROKER = "/broker/master"
+PATH_TO_MASTER_BROKER = "/broker"
 PATH_TO_LOAD_BALANCER = "/load"
 
 #############################

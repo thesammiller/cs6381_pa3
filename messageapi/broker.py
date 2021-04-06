@@ -35,10 +35,11 @@ class BrokerProxy(ZeroProxy):
         super().__init__()
         self.sockets = {}
         # Socket data maps to opposite port to X sockets (XPub, XSub)
-        self.sockets_data = {"Subscriber": BROKER_PUBLISHER_PORT,
-                             "Publisher": BROKER_SUBSCRIBER_PORT}
+        self.sockets_data = {"subscriber": BROKER_PUBLISHER_PORT,
+                             "publisher": BROKER_SUBSCRIBER_PORT}
         self.setup_sockets()
         self.events = None
+
 
     def setup_sockets(self):
         for role, port in self.sockets_data.items():
@@ -55,9 +56,9 @@ class BrokerProxy(ZeroProxy):
 
     def run(self):
         while True:
+            self.check_master_count()
             try:
                 self.poll()
-                self.check_master_count()
             except NameError as e:
                 print("Exception thrown: {}".format(sys.exc_info()[1]))
 
@@ -71,11 +72,12 @@ class BrokerProxy(ZeroProxy):
 
     def get_socket_data(self, role):
         if self.sockets[role] in self.events:
+            print("NEW EVENT FOR {}".format(role))
             # We have an event -> receive the event
             msg = self.sockets[role].recv_string()
             print("{role} -> {message}".format(role=role, message=msg))
             # Send the message to the other role socket
-            other_role = 'Subscriber' if role == 'Publisher' else 'Publisher'
+            other_role = 'subscriber' if role == 'publisher' else 'publisher'
             self.sockets[other_role].send_string(msg)
 
 
@@ -93,13 +95,14 @@ class BrokerPublisher(ZeroPublisher):
 
     def register(self):
         self.register_pub()
-        self.register_broker()
+
 
     def register_pub(self):
         print("Publisher connecting to proxy at: {}".format(self.server_endpoint))
+        self.register_broker()
         self.socket = self.context.socket(zmq.PUB)
         self.socket.connect(self.server_endpoint)
-
+        
     def publish(self, data):
         message = {}
         message['topic'] = self.topic

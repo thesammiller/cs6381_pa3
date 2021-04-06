@@ -1,0 +1,10 @@
+h1 ./zooscripts/restartzoo.sh
+h2 ./load.py &
+h2 sleep 2
+h3 ./proxy.py BROKER &
+h3 sleep 5
+h4 ./publisher.py 12345 BROKER &
+h4 sleep 2
+h5 echo "./subscriber.py 12345 BROKER &"
+h5 sleep 2
+

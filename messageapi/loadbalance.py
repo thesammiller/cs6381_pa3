@@ -87,12 +87,14 @@ class LoadProxy(ZeroLoad):
         for topic in topic_list:
             children = self.zk.get_children(path+'/'+topic)
             for entry in children:
-                data = self.zk.get(path + '/{}'.format(entry))[0]
-                decoded_data = codecs.decode(data, 'utf-8')
-                list_of_addresses = decoded_data.split()
-                role = PUBLISHER if PUBLISHER in entry else SUBSCRIBER
-                self.registry[topic][role] = list_of_addresses
-
+                try:
+                    data = self.zk.get(path + '/{}'.format(entry))[0]
+                    decoded_data = codecs.decode(data, 'utf-8')
+                    list_of_addresses = decoded_data.split()
+                    role = PUBLISHER if PUBLISHER in entry else SUBSCRIBER
+                    self.registry[topic][role] = list_of_addresses
+                except:
+                    continue
 
     def update_broker_registry(self, path):
         print("Updating registry...")
