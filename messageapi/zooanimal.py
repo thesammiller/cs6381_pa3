@@ -7,6 +7,7 @@
 #
 
 import codecs
+import json
 import time
 import threading
 
@@ -71,11 +72,16 @@ class ZooAnimal:
 
     def zookeeper_master(self):
         if not self.zk_is_a_master:
-            print("Becoming the master.")
-            role_topic = ZOOKEEPER_PATH_STRING.format(role=self.role, topic='master')
-            encoded_ip = codecs.encode(self.ipaddress, "utf-8")
-            self.zk.create(role_topic, ephemeral=True, makepath=True, value=encoded_ip)
-            return True
+            print("ZOOANIMAL -> Becoming a master.")
+            role_topic = "/broker/master"
+            data = {'ip': self.ipaddress}
+            data_string = json.dumps(data)
+            encoded_ip = codecs.encode(data_string, "utf-8")
+            self.zk.create(role_topic, ephemeral=True,
+                           makepath=True, sequence=True, value=encoded_ip)
+            self.zk_is_a_master = True
+        return self.zk_is_a_master
+
 
     def zookeeper_register(self):
         pass
@@ -135,15 +141,15 @@ class ZooProxy(ZooAnimal):
     def zookeeper_register(self):
         if self.role == 'broker':
             broker_path = "/broker"
-            encoded_ip = codecs.encode(self.ipaddress)
+            data = {}
+            data['ip'] = self.ipaddress
+            data_string = json.dumps(data)
+            encoded_ip = codecs.encode(data_string)
             if self.zk_seq_id == None:
                 self.zk.create(self.zk_path, ephemeral=True, sequence=True, makepath=True, value=encoded_ip)
                 brokers = self.zk.get_children(broker_path)
-                try:
-                    brokers.pop(brokers.index("master"))
-                except:
-                    pass
                 brokers = [x for x in brokers if "lock" not in x]
+                brokers = [x for x in brokers if "master" not in x]
                 print(brokers)
                 broker_nums = {y: int(y[4:]) for y in brokers}
                 #sort based on the values
@@ -160,10 +166,11 @@ class ZooProxy(ZooAnimal):
                 # Get all the children
                 path = self.zk.get_children(broker_path)
                 # Remove the master
-                path.pop(path.index("master"))
+                
                 #path.pop(path.index(self.zk_seq_id))
                 # Process out the locks
                 path = [x for x in path if "lock" not in x]
+                path = [x for x in path if "master" not in x]
                 #Convert into a dictionary of znode:sequential
                 #We keep the path name as the key
                 #Use the sequential number as the value
