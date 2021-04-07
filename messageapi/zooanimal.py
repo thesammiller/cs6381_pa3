@@ -183,15 +183,17 @@ class ZooProxy(ZooAnimal):
 ##########################################################################################
 
 class ZooClient(ZooAnimal):
-    def __init__(self, role, topic):
+    def __init__(self, role, topic, history=5):
         super().__init__()
         self.role = role
         self.topic = topic
+        self.history = history
         self.zookeeper_register()
 
 
     def zookeeper_register(self):
-     # This will result in a path of /broker/publisher/12345 or whatever
+        '''
+         # This will result in a path of /broker/publisher/12345 or whatever
         # or /broker/broker/master
         role_topic = ZOOKEEPER_PATH_STRING.format(role=self.role, topic=self.topic)
         print("Zooanimal IP-> {}".format(self.ipaddress))
@@ -220,5 +222,16 @@ class ZooClient(ZooAnimal):
             # else the byte string is empty and we can just send our ip_address
             else:
                 self.zk.set(role_topic, codecs.encode(self.ipaddress, 'utf-8'))
-
+        '''
+        topic = "/topic/" + self.topic
+        topic_role = topic + "/" + self.role
+        json_data = {'ip': self.ipaddress, 'history': self.history}
+        json_string = json.dumps(json_data)
+        json_encoded = codecs.encode(json_string, 'utf-8')
+        self.zk.create(topic_role, ephemeral=True, makepath=True,
+                       sequence=True, value=json_encoded)
+        topic_clients = self.zk.get_children(topic)
+        topic_sort = sorted(topic_clients, key=lambda data: int(data[-5:]))
+        self.zk_seq_id = topic_sort[-1]
+        print("ZOOANIMAL ID -> {}".format(self.zk_seq_id))
     
