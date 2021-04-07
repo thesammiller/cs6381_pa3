@@ -23,7 +23,7 @@ import zmq
 
 # Local
 from .util import local_ip4_addr_list
-from .zooanimal import ZooAnimal, ZooLoad, ZOOKEEPER_ADDRESS, ZOOKEEPER_PORT, ZOOKEEPER_PATH_STRING
+from .zooanimal import ZooAnimal, ZooLoad, ZooProxy, ZooClient, ZOOKEEPER_ADDRESS, ZOOKEEPER_PORT, ZOOKEEPER_PATH_STRING
 
 BROKER_PUBLISHER_PORT = "5556"
 BROKER_SUBSCRIBER_PORT = "5555"
@@ -36,7 +36,7 @@ NO_REGISTERED_ENTRIES = ""
 
 LOAD_BALANCE_PORT = "6666"
 
-class ZeroProxy(ZooAnimal):
+class ZeroProxy(ZooProxy):
     def __init__(self):
         #ZooAnimal initialize
         super().__init__()
@@ -107,10 +107,9 @@ class ZeroLoad(ZooLoad):
 #
 #############################
 
-class ZeroClient(ZooAnimal):
-    def __init__(self, topic):
-        super().__init__()
-        self.topic = topic
+class ZeroClient(ZooClient):
+    def __init__(self, role, topic):
+        super().__init__(role, topic)
         self.context = zmq.Context()
         self.broker = self.get_broker()
         self.port = 0
@@ -171,11 +170,10 @@ class ZeroClient(ZooAnimal):
 
 class ZeroPublisher(ZeroClient):
     def __init__(self, topic):
-        super().__init__(topic)
         self.role = 'publisher'
+        super().__init__(self.role, topic)
         self.port = BROKER_PUBLISHER_PORT
         self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker, port=self.port)
-        self.zookeeper_register()
 
 
 #############################
@@ -186,10 +184,9 @@ class ZeroPublisher(ZeroClient):
 
 class ZeroSubscriber(ZeroClient):
     def __init__(self, topic):
-        super().__init__(topic)
         self.role = 'subscriber'
+        super().__init__(self.role, topic)
         self.port = BROKER_SUBSCRIBER_PORT
         self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker, port=self.port)
-        self.zookeeper_register()
 
 
