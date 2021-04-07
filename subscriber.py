@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import json
 import sys
 from messageapi.broker import BrokerSubscriber
 from messageapi.flood import FloodSubscriber
@@ -19,9 +20,11 @@ class WeatherSubscriber:
         print("Running subscriber application...")
         total_temp = 0
         for update_nbr in range(5):
-            string = self.sub.notify()
+            message = self.sub.notify()
             #print("Suscriber Application got message.")
-            temperature, relhumidity = string.split(" ")
+            #temperature, relhumidity = string.split(" ")
+            data = json.loads(message)
+            temperature = data['temperature']
             total_temp += int(temperature)
             
         print("Average temperature for zipcode '%s' was %dF" % (self.topic, total_temp / (update_nbr+1)))

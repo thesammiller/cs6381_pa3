@@ -172,3 +172,24 @@ class ZooAnimal:
                 else:
                     raise Exception("No master broker.")
             time.sleep(0.2)
+
+
+class ZooLoad(ZooAnimal):
+    def __init__(self):
+        super().__init__()
+        self.role = "load"
+        self.topic = "balance"
+        self.zookeeper_register()
+
+    def zookeeper_register(self):
+        role_topic = ZOOKEEPER_PATH_STRING.format(
+            role=self.role, topic=self.topic)
+        encoded_ip = codecs.encode(self.ipaddress, "utf-8")
+        try:
+            self.zk.create(role_topic, ephemeral=True,
+                           sequence=True, makepath=True, value=encoded_ip)
+        except:
+            print(
+                "Exception -> zooanimal.py -> zookeeper_register -> load elif statement")
+
+            

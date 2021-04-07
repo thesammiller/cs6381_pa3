@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import json
 import sys
 import time
 import zmq
@@ -20,7 +21,10 @@ class WeatherPublisher:
     def generateWeather(self):
         temperature = randrange(-80, 135)
         relhumidity = randrange(10, 60)
-        return "{} {}".format(temperature, relhumidity)
+        message = {}
+        message['temperature'] = temperature
+        message['humidity'] = relhumidity
+        return json.dumps(message)
         
     def weatherPublish(self):
         data = self.generateWeather()

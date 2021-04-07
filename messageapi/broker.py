@@ -96,6 +96,7 @@ class BrokerPublisher(ZeroPublisher):
         super().__init__(topic)
     
     def register(self):
+        #self.register_with_broker()
         self.register_pub()
 
     def register_pub(self):
@@ -103,13 +104,17 @@ class BrokerPublisher(ZeroPublisher):
         self.socket = self.context.socket(zmq.PUB)
         self.socket.connect(self.server_endpoint)
     
-    def publish(self, value):
-        # print ("Message API Sending: {} {}".format(self.topic, value))
-        message = {}
-        message['topic'] = self.topic
-        message['value'] = value
-        message['time'] = time.time()
-        self.socket.send_string("{topic} {time} {value}".format(**message))
+    def publish(self, data):
+        if self.broker != None:
+            # print ("Message API Sending: {} {}".format(self.topic, value))
+            message = {}
+            message['topic'] = self.topic
+            message['data'] = data
+            message['time'] = time.time()
+            #message_string = json.dumps(message)
+            #print(message_string)
+            message_string = "{topic}----{time}----{data}".format(**message)
+            self.socket.send_string(message_string)
     
 
 ################################################################################
@@ -131,6 +136,7 @@ class BrokerSubscriber(ZeroSubscriber):
         self.socket = self.context.socket(zmq.SUB)
 
     def register(self):
+        #self.register_with_broker()
         self.register_sub()
 
     def register_sub(self):
@@ -142,12 +148,16 @@ class BrokerSubscriber(ZeroSubscriber):
     def notify(self):
         message = self.socket.recv_string()
         # Split message based on our format
-        topic, pub_time, *values = message.split()
+        topic, pub_time, data = message.split("----")
+        #pub_data = json.loads(message)
+        #topic = pub_data['topic']
+        #pub_time = pub_data['time']
+        #data = pub_data['data']
         # get difference in time between now and when message was sent
         difference = time.time() - float(pub_time)
         # Write the difference in time from the publisher to the file
         with open("./logs/seconds_{}.log".format(self.ipaddress), "a") as f:
             f.write(str(difference) + "\n")
-        return " ".join(values)
+        return data
 
 
