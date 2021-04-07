@@ -78,37 +78,6 @@ class ZooAnimal:
             return True
 
     def zookeeper_register(self):
-        '''
-        #This will result in a path of /broker/publisher/12345 or whatever
-        # or /broker/broker/master
-        role_topic = ZOOKEEPER_PATH_STRING.format(role=self.role, topic=self.topic)
-        print("Zooanimal IP-> {}".format(self.ipaddress))
-        encoded_ip = codecs.encode(self.ipaddress, "utf-8")
-
-        if self.role =='publisher' or self.role=='subscriber':
-            # zk.ensure_path checks if path exists, and if not it creates it
-            try:
-                self.zk.create(role_topic, ephemeral=True, makepath=True)
-            except:
-                print("Topic already exists.")
-
-            # get the string from the path - if it's just created, it will be empty
-            # if it was created earlier, there should be other ip addresses
-            other_ips = self.zk.get(role_topic)
-
-            # Zookeeper uses byte strings --> b'I'm a byte string'
-            # We don't like that and need to convert it
-            other_ips = codecs.decode(other_ips[0], 'utf-8')
-
-            # if we just created the path, it will be an empty byte string
-            # if it's empty, this will be true and we'll add our ip to the end of the other ips
-            if other_ips != '':
-                print("Adding to the topics list")
-                self.zk.set(role_topic, codecs.encode(other_ips + ' ' + self.ipaddress, 'utf-8'))
-            # else the byte string is empty and we can just send our ip_address
-            else:
-                self.zk.set(role_topic, codecs.encode(self.ipaddress, 'utf-8'))
-        '''
         pass
 
     # This is a function stub for the get_broker watch callback
@@ -132,7 +101,8 @@ class ZooAnimal:
                     raise Exception("No master broker.")
             time.sleep(0.2)
 
-
+###########################################################################
+            
 class ZooLoad(ZooAnimal):
     def __init__(self):
         super().__init__()
@@ -150,7 +120,9 @@ class ZooLoad(ZooAnimal):
         except:
             print(
                 "Exception -> zooanimal.py -> zookeeper_register -> load elif statement")
-
+            
+#############################################################################################
+            
             
 class ZooProxy(ZooAnimal):
     def __init__(self):
@@ -196,14 +168,12 @@ class ZooProxy(ZooAnimal):
                 #We keep the path name as the key
                 #Use the sequential number as the value
                 # e.g. key pool000001 value 000001
-                path_nums = {y: int(y[4:]) for y in path}
-                #sort based on the values
-                path_sort = sorted(path_nums, key=lambda data: path_nums[data])
+                path_sort = sorted(path, key=lambda data: data[4:])
                 previous = path_sort[path_sort.index(self.zk_seq_id)-1]
                 watch_path = broker_path + "/" + previous
                 self.zookeeper_watcher(watch_path)
 
-
+##########################################################################################
 
 class ZooClient(ZooAnimal):
     def __init__(self, role, topic):
