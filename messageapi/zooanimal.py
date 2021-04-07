@@ -188,50 +188,52 @@ class ZooClient(ZooAnimal):
         self.role = role
         self.topic = topic
         self.history = history
-        self.zookeeper_register()
+        self.zk_seq_id = None
+        self.zk_register()
+        self.zk_ownership = self.zk_watch_owner()
 
-
-    def zookeeper_register(self):
-        '''
-         # This will result in a path of /broker/publisher/12345 or whatever
-        # or /broker/broker/master
-        role_topic = ZOOKEEPER_PATH_STRING.format(role=self.role, topic=self.topic)
-        print("Zooanimal IP-> {}".format(self.ipaddress))
-        encoded_ip = codecs.encode(self.ipaddress, "utf-8")
-
-        if self.role =='publisher' or self.role=='subscriber':
-            # zk.ensure_path checks if path exists, and if not it creates it
-            try:
-                self.zk.create(role_topic, ephemeral=True, makepath=True)
-            except:
-                print("Topic already exists.")
-
-            # get the string from the path - if it's just created, it will be empty
-            # if it was created earlier, there should be other ip addresses
-            other_ips = self.zk.get(role_topic)
-
-            # Zookeeper uses byte strings --> b'I'm a byte string'
-            # We don't like that and need to convert it
-            other_ips = codecs.decode(other_ips[0], 'utf-8')
-
-            # if we just created the path, it will be an empty byte string
-            # if it's empty, this will be true and we'll add our ip to the end of the other ips
-            if other_ips != '':
-                print("Adding to the topics list")
-                self.zk.set(role_topic, codecs.encode(other_ips + ' ' + self.ipaddress, 'utf-8'))
-            # else the byte string is empty and we can just send our ip_address
-            else:
-                self.zk.set(role_topic, codecs.encode(self.ipaddress, 'utf-8'))
-        '''
+    def zk_register(self):
         topic = "/topic/" + self.topic
-        topic_role = topic + "/" + self.role
-        json_data = {'ip': self.ipaddress, 'history': self.history}
-        json_string = json.dumps(json_data)
-        json_encoded = codecs.encode(json_string, 'utf-8')
-        self.zk.create(topic_role, ephemeral=True, makepath=True,
-                       sequence=True, value=json_encoded)
+        if self.zk_seq_id == None:
+            topic_clients = self.zk.get_children(topic)
+            if not topic_clients:
+                self.zk_ownership = 0
+            else:
+                self.zk_ownership = len([x for x in topic_clients if self.role in x])
+            topic_role = topic + "/" + self.role
+            json_data = {'ip': self.ipaddress, 'history': self.history, 'ownership': self.zk_ownership}
+            json_string = json.dumps(json_data)
+            json_encoded = codecs.encode(json_string, 'utf-8')
+            self.zk.create(topic_role, ephemeral=True, makepath=True, sequence=True, value=json_encoded)
+            topic_clients = self.zk.get_children(topic)
+            topic_sort = sorted(topic_clients, key=lambda data: int(data[-5:]))
+            self.zk_seq_id = topic_sort[-1]
+            print("ZOOANIMAL ID -> {}".format(self.zk_seq_id))
+        else:
+            json_data = {'ip': self.ipaddress, 'history': self.history, 'ownership': self.zk_ownership}
+            json_string = json.dumps(json_data)
+            json_encoded = codecs.encode(json_string, 'utf-8')
+            self.zk.set(topic + "/" + self.zk_seq_id, json_encoded)
+
+    def zk_get_owner_position(self):
+        topic = "/topic/" + self.topic
         topic_clients = self.zk.get_children(topic)
-        topic_sort = sorted(topic_clients, key=lambda data: int(data[-5:]))
-        self.zk_seq_id = topic_sort[-1]
-        print("ZOOANIMAL ID -> {}".format(self.zk_seq_id))
-    
+        topic_roles = [x for x in topic_clients if self.role in x]
+        topic_sort = sorted(topic_roles, key=lambda data: int(data[-5:]))
+        return topic_sort.index(self.zk_seq_id)
+
+    def zk_watch_owner(self):
+        self.zk_ownership = self.zk_get_owner_position()
+        if self.zk_ownership != 0:
+            topic = "/topic/" + self.topic
+            topic_clients = self.zk.get_children(topic)
+            topic_roles = [x for x in topic_clients if self.role in x]
+            topic_sort = sorted(topic_roles, key=lambda data: int(data[-5:]))
+            topic_index = topic_sort.index(self.zk_seq_id)
+            self.zk.get(topic+'/'+topic_sort[topic_index-1], watch=self.zk_owner_reset)
+        return self.zk_ownership
+
+    def zk_owner_reset(self, data):
+        self.zk_ownership = self.zk_get_owner_position()
+        self.zk_register()
+        self.zk_watch_owner()

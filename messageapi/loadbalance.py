@@ -20,7 +20,7 @@ PUBLISHER = "publisher"
 SUBSCRIBER = "subscriber"
 
 NO_REGISTERED_ENTRIES = ""
-LOAD_THRESHOLDS = [2, 4]
+LOAD_THRESHOLDS = [4, 6]
 
 
 ###############################################################
