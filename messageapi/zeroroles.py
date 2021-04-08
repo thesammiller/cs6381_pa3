@@ -114,18 +114,19 @@ class ZeroLoad(ZooLoad):
     def run(self):
         pass
 
+    '''
     def get_broker_list(self):
         for i in range(10):
             if self.zk.exists("/broker"):
-                node_data = self.zk.get("/broker", watch=self.broker_update)
-                broker_data = node_data[0]
-                master_broker = codecs.decode(broker_data, 'utf-8')
-                if master_broker != '':
+                node_data = self.zk.get_children("/broker")
+                master_broker = [m for m in node_data if 'master' in m]
+                if master_broker:
                     self.broker = master_broker
                     return self.broker
                 else:
-                    raise Exception("No master broker.")
+                    pass
             time.sleep(0.2)
+    '''
 
     def get_primary_broker(self):
         for i in range(100):
@@ -163,14 +164,14 @@ class ZeroClient(ZooClient):
     def broker_update(self, data):
         self.master_znode = None
         for i in range(10):
-            try:
-                self.broker = self.get_broker()
-                print("Broker get -> {}".format(self.broker))
-                self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker['ip'], port=self.port)
-                self.register_with_broker()
-                break
-            except:
-                print("No master yet...")
+            #try:
+            self.broker = self.get_broker()
+            print("Broker get -> {}".format(self.broker))
+            self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker['ip'], port=self.port)
+            self.register_with_broker()
+            break
+            #except Exception as e:
+                #print("Exception -> {}".format(e))
             time.sleep(0.5)
 
 
@@ -192,7 +193,7 @@ class ZeroClient(ZooClient):
 
                 hello_socket = self.context.socket(zmq.REQ)
                 connect_str = SERVER_ENDPOINT.format(address=load_balance_address, port=LOAD_BALANCE_PORT)
-                #print("CONNECTING -> {}".format(connect_str))
+                print("CONNECTING -> {}".format(connect_str))
                 hello_socket.connect(connect_str)
                 hello_socket.send_string(hello_message)
                 # Wait for return message
@@ -237,8 +238,8 @@ class ZeroClient(ZooClient):
         #print(hello_message)
         # Send to the proxy
         hello_socket = self.context.socket(zmq.REQ)
-        #print(self.broker)
-        connect_str = SERVER_ENDPOINT.format(address=self.broker, port=FLOOD_PROXY_PORT)
+        connect_str = SERVER_ENDPOINT.format(address=self.broker['ip'], port=FLOOD_PROXY_PORT)
+        print(connect_str)
         hello_socket.connect(connect_str)
         hello_socket.send_string(hello_message)
         # Wait for return message

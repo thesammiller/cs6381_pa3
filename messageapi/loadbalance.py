@@ -8,9 +8,9 @@
 import codecs
 from collections import defaultdict
 import json
-from math import floor
 from pprint import pprint as print
 import random
+import time
 
 import zmq
 
@@ -42,6 +42,7 @@ class LoadProxy(ZeroLoad):
         self.master_count = 1
         self.threshold_index = 0
         self.topic_brokers = {}
+        self.do_rebalance = True
 
     def setup_sockets(self):
         print("Setup sockets")
@@ -123,7 +124,7 @@ class LoadProxy(ZeroLoad):
     def check_load(self):
         # sub_topics = self.registry[SUBSCRIBER]
         # sub_scribers = sum(sub_topics)
-        if len(self.registry[SUBSCRIBER]) + len(self.registry[PUBLISHER]) > LOAD_THRESHOLDS[self.threshold_index]:
+        if len(self.registry[SUBSCRIBER]) + len(self.registry[PUBLISHER]) > LOAD_THRESHOLDS[self.threshold_index] & self.do_rebalance:
             print("Rebalancing")
             self.rebalance()
             self.threshold_index += 1
@@ -132,3 +133,7 @@ class LoadProxy(ZeroLoad):
 
     def rebalance(self):
         self.topic_brokers = {}
+        time.sleep(1)
+        self.check_registry()
+        if self.threshold_index == len(LOAD_THRESHOLDS)-1:
+            self.do_rebalance = False
