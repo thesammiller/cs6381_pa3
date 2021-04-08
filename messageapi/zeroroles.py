@@ -66,9 +66,7 @@ class ZeroProxy(ZooProxy):
             if balances:
                 load_balancer = balances[0]
                 load_balance_path = PATH_TO_LOAD_BALANCER + "/" + load_balancer
-                load_balance_address = codecs.decode(
-                    self.zk.get(load_balance_path)[0], "utf-8")
-
+                load_balance_address = codecs.decode(self.zk.get(load_balance_path)[0], "utf-8")
                 message = {}
                 message['role'] = self.role
                 message['topic'] = self.topic
@@ -87,7 +85,7 @@ class ZeroProxy(ZooProxy):
                 else:
                     #    events queued within our time limit
                     reply = hello_socket.recv_string(flags=zmq.NOBLOCK)
-                    print("MASTER COUNT -> {}".format(reply))
+                    #print("MASTER COUNT -> {}".format(reply))
                     return reply
             time.sleep(0.2)
             return 0
@@ -166,7 +164,7 @@ class ZeroClient(ZooClient):
         for i in range(10):
             #try:
             self.broker = self.get_broker()
-            print("Broker get -> {}".format(self.broker))
+            #print("Broker get -> {}".format(self.broker))
             self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker['ip'], port=self.port)
             self.register_with_broker()
             break
@@ -193,7 +191,7 @@ class ZeroClient(ZooClient):
 
                 hello_socket = self.context.socket(zmq.REQ)
                 connect_str = SERVER_ENDPOINT.format(address=load_balance_address, port=LOAD_BALANCE_PORT)
-                print("CONNECTING -> {}".format(connect_str))
+                #print("CONNECTING -> {}".format(connect_str))
                 hello_socket.connect(connect_str)
                 hello_socket.send_string(hello_message)
                 # Wait for return message
@@ -212,7 +210,7 @@ class ZeroClient(ZooClient):
         while self.master_znode is None:
             self.master_znode = self.get_broker_from_load_balancer()
             time.sleep(0.1)
-        print("You have a new master Znode")
+        #print("You have a new master Znode")
         # Broker gives us the name of the node we need to use as our master
         #print("BROKER ZNODE --> {}".format(self.master_znode))
         path = "/broker/" + self.master_znode
@@ -227,7 +225,7 @@ class ZeroClient(ZooClient):
             
     #children should use this as shell for register method
     def register_with_broker(self):
-        print("{} - > Registering {} to address {}".format(None, self. role, self.broker))
+        #print("Registering {} to address {}".format(self. role, self.broker))
         # Create handshake message for the Flood Proxy
         message = {}
         message['role'] = self.role
@@ -239,7 +237,7 @@ class ZeroClient(ZooClient):
         # Send to the proxy
         hello_socket = self.context.socket(zmq.REQ)
         connect_str = SERVER_ENDPOINT.format(address=self.broker['ip'], port=FLOOD_PROXY_PORT)
-        print(connect_str)
+        #print(connect_str)
         hello_socket.connect(connect_str)
         hello_socket.send_string(hello_message)
         # Wait for return message

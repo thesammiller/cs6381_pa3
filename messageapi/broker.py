@@ -28,6 +28,8 @@ from .zeroroles import ZeroProxy, ZeroPublisher, ZeroSubscriber
 from .zeroroles import BROKER_PUBLISHER_PORT, BROKER_SUBSCRIBER_PORT, SERVER_ENDPOINT
 
 
+SPLITSTRING = "----"
+
 ##################################################################################
 #
 #
@@ -118,9 +120,11 @@ class BrokerPublisher(ZeroPublisher):
             message['topic'] = self.topic
             message['data'] = data
             message['time'] = time.time()
+            message['seq_id'] = self.zk_seq_id
+            message['split'] = SPLITSTRING
             #message_string = json.dumps(message)
             #print(message_string)
-            message_string = "{topic}----{time}----{data}".format(**message)
+            message_string = "{topic}{split}{time}{split}{seq_id}{split}{data}".format(**message)
             self.socket.send_string(message_string)
     
 
@@ -157,12 +161,21 @@ class BrokerSubscriber(ZeroSubscriber):
         self.broker_update('')
         message = self.socket.recv_string()
         # Split message based on our format
-        topic, pub_time, data = message.split("----")
-        # get difference in time between now and when message was sent
-        difference = time.time() - float(pub_time)
-        # Write the difference in time from the publisher to the file
-        with open("./logs/seconds_{}.log".format(self.ipaddress), "a") as f:
-            f.write(str(difference) + "\n")
-        return data
+        topic, pub_time, seq_id, data = message.split(SPLITSTRING)
+        zk_path = "/topic/{topic}/{seq_id}".format(topic=topic, seq_id=seq_id)
+        zk_data = self.zk.get(zk_path)
+        zk_decode = codecs.decode(zk_data[0])
+        zk_json = json.loads(zk_decode)
+        ownership = zk_json['ownership']
+        if ownership == 0:
+            # get difference in time between now and when message was sent
+            difference = time.time() - float(pub_time)
+            # Write the difference in time from the publisher to the file
+            with open("./logs/seconds_{}.log".format(self.ipaddress), "a") as f:
+                f.write(str(difference) + "\n")
+            return data
+        #Subscribers must now check for none return
+        else:
+            return None
 
 

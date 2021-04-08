@@ -96,7 +96,7 @@ class LoadProxy(ZeroLoad):
             self.incoming_socket.send_string(broker)
 
     def update_client_registry(self, path):
-        print("Updating pub-sub registry...")
+        #print("Updating pub-sub registry...")
         try:
             topic_list = self.zk.get_children(path)
         except:
@@ -114,14 +114,14 @@ class LoadProxy(ZeroLoad):
                     continue
 
     def update_broker_registry(self, path):
-        print("Updating registry...")
+        #print("Updating registry...")
         children = self.zk.get_children(path)
         masters = [m for m in children if 'master' in m]
         print("Updated Masters --> {}".format(masters))
         self.registry[path[1:]] = masters
 
     def check_registry(self):
-        print("Checking registry...")
+        #print("Checking registry...")
         # get all the /flood/subscriber children
         self.update_client_registry("/topic")
         self.update_broker_registry('/broker')
