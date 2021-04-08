@@ -105,6 +105,7 @@ class BrokerPublisher(ZeroPublisher):
         self.socket.connect(self.server_endpoint)
     
     def publish(self, data):
+        self.broker_update('')
         if self.broker != None:
             # print ("Message API Sending: {} {}".format(self.topic, value))
             message = {}
@@ -145,14 +146,12 @@ class BrokerSubscriber(ZeroSubscriber):
         self.socket.setsockopt_string(zmq.SUBSCRIBE, self.topic)
 
     # sub gets message
+    # TODO: Sub history -- need to implement
     def notify(self):
+        self.broker_update('')
         message = self.socket.recv_string()
         # Split message based on our format
         topic, pub_time, data = message.split("----")
-        #pub_data = json.loads(message)
-        #topic = pub_data['topic']
-        #pub_time = pub_data['time']
-        #data = pub_data['data']
         # get difference in time between now and when message was sent
         difference = time.time() - float(pub_time)
         # Write the difference in time from the publisher to the file

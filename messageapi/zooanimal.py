@@ -195,11 +195,11 @@ class ZooClient(ZooAnimal):
     def zk_register(self):
         topic = "/topic/" + self.topic
         if self.zk_seq_id == None:
-            topic_clients = self.zk.get_children(topic)
-            if not topic_clients:
-                self.zk_ownership = 0
-            else:
+            try:
+                topic_clients = self.zk.get_children(topic)
                 self.zk_ownership = len([x for x in topic_clients if self.role in x])
+            except:
+                self.zk_ownership = 0
             topic_role = topic + "/" + self.role
             json_data = {'ip': self.ipaddress, 'history': self.history, 'ownership': self.zk_ownership}
             json_string = json.dumps(json_data)
@@ -234,6 +234,6 @@ class ZooClient(ZooAnimal):
         return self.zk_ownership
 
     def zk_owner_reset(self, data):
-        self.zk_ownership = self.zk_get_owner_position()
-        self.zk_register()
         self.zk_watch_owner()
+        self.zk_register()
+
