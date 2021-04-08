@@ -92,8 +92,14 @@ class BrokerProxy(ZeroProxy):
 ##############################################################
 
 class BrokerPublisher(ZeroPublisher):
-    def __init__(self, topic):
-        super().__init__(topic)
+    def __init__(self, topic, history=5):
+        super().__init__(topic, history)
+        self.history_list = []
+
+    def add_to_history(self, data):
+        self.history_list.append(data)
+        if len(self.history_list) > 10:
+            self.history_list = self.history_list[1:]
     
     def register(self):
         #self.register_with_broker()

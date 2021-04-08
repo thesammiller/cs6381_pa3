@@ -83,9 +83,14 @@ class LoadProxy(ZeroLoad):
                 if topic in self.topic_brokers:
                     broker = self.topic_brokers[topic]
                 else:
-                    # Choose a broker at random if we don't know the topic
-                    broker = random.choice(self.registry['broker'])
-                    self.topic_brokers[topic] = broker
+                    for i in range(10):
+                        try:
+                            self.update_broker_registry('/broker')
+                            # Choose a broker at random if we don't know the topic
+                            broker = random.choice(self.registry['broker'])
+                            self.topic_brokers[topic] = broker
+                        except:
+                            time.sleep(0.1)
             if role == 'broker':
                 broker = str(self.master_count)
             self.incoming_socket.send_string(broker)

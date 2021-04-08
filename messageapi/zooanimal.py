@@ -44,10 +44,8 @@ class ZooAnimal:
     def __init__(self):
         self.zk = KazooClient(hosts=ZOOKEEPER_LOCATION)
         self.zk.start()
-
         # Use util function to get IP address
         self.ipaddress = [ip for ip in list(local_ip4_addr_list()) if ip.startswith(NETWORK_PREFIX)][0]
-
         # Inheriting children should assign values to fit the scheme
         # /role/topic
         self.role = None

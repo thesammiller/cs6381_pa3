@@ -153,8 +153,8 @@ class ZeroLoad(ZooLoad):
 #############################
 
 class ZeroClient(ZooClient):
-    def __init__(self, role, topic):
-        super().__init__(role, topic)
+    def __init__(self, role, topic, history):
+        super().__init__(role, topic, history)
         self.context = zmq.Context()
         self.port = 0
         self.socket = None
@@ -266,9 +266,9 @@ class ZeroClient(ZooClient):
 ##########################
 
 class ZeroPublisher(ZeroClient):
-    def __init__(self, topic):
+    def __init__(self, topic, history):
         self.role = 'publisher'
-        super().__init__(self.role, topic)
+        super().__init__(self.role, topic, history)
         self.broker = self.get_broker()
         self.port = BROKER_PUBLISHER_PORT
         self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker['ip'], port=self.port)
@@ -281,9 +281,9 @@ class ZeroPublisher(ZeroClient):
 ###########################
 
 class ZeroSubscriber(ZeroClient):
-    def __init__(self, topic):
+    def __init__(self, topic, history=5):
         self.role = 'subscriber'
-        super().__init__(self.role, topic)
+        super().__init__(self.role, topic, history)
         self.broker = self.get_broker()
         self.port = BROKER_SUBSCRIBER_PORT
         self.server_endpoint = SERVER_ENDPOINT.format(address=self.broker['ip'], port=self.port)
