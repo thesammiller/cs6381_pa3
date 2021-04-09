@@ -72,7 +72,6 @@ class BrokerProxy(ZeroProxy):
         self.events = dict(self.poller.poll(1000))
         print("Events received = {}".format(self.events))
         for role, socket in self.sockets.items():
-            #For each socket, get data
             self.get_socket_data(role)
 
     def get_socket_data(self, role):
@@ -175,7 +174,7 @@ class BrokerSubscriber(ZeroSubscriber):
         elif ownership == 0 and pub_history <= self.history:
             clients = self.zk.get_children('/topic/'+self.topic)
             publishers = [c for c in clients if "publisher" in c]
-            sorted_publishers = sorted(publishers, key=lambda p: int(p[-6:]))
+            sorted_publishers = sorted(publishers, key=lambda pub: int(pub[-6:]))
             for p in sorted_publishers:
                 data = self.zk.get("/topic/" + self.topic + '/' + p)
                 data_decoded = codecs.decode(data[0])
