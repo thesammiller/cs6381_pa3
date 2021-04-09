@@ -180,19 +180,20 @@ class ZooProxy(ZooAnimal):
 
 ##########################################################################################
 
+
 class ZooClient(ZooAnimal):
-    def __init__(self, role, topic, history=5):
+    def __init__(self, role=None, topic="00000", history="5"):
         super().__init__()
         self.role = role
         self.topic = topic
-        self.history = history
+        self.history = int(history)
         self.zk_seq_id = None
         self.zk_register()
         self.zk_ownership = self.zk_watch_owner()
 
     def zk_register(self):
         topic = "/topic/" + self.topic
-        if self.zk_seq_id == None:
+        if not self.zk_seq_id:
             try:
                 topic_clients = self.zk.get_children(topic)
                 self.zk_ownership = len([x for x in topic_clients if self.role in x])

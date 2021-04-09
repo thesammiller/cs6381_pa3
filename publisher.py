@@ -13,9 +13,8 @@ system = {"BROKER": BrokerPublisher,
 
 class WeatherPublisher:
 
-    def __init__(self, topic, broker):
-        self.topic = topic
-        self.pub = system[broker](self.topic)
+    def __init__(self, api, topic="00000", history="5"):
+        self.pub = system[api](topic=topic, history=history)
         self.pub.register_pub()
         
     def generateWeather(self):
@@ -29,13 +28,14 @@ class WeatherPublisher:
     def weatherPublish(self):
         data = self.generateWeather()
         self.pub.publish("{data}".format(data=data))
-        print ("Application sending: {topic} {data}".format(topic=self.topic, data=data))
+        print ("Application sending: {topic} {data}".format(topic=self.pub.topic, data=data))
 
 
 def main():
 
     topic = sys.argv[1] if len(sys.argv) > 1 else "90210"
     api = sys.argv[2] if len(sys.argv) > 2 else "BROKER"
+    history = sys.argv[3] if len(sys.argv) > 3 else "5"
     
     if api not in system.keys():
         print("Usage error -- message api can either be FLOOD or BROKER")
@@ -45,10 +45,10 @@ def main():
         print("Usage error -- topic must be 5 digit zipcode.")
         sys.exit(-1)
         
-    wp = WeatherPublisher(topic, api)
+    wp = WeatherPublisher(api, topic=topic, history=history)
     while True:
         wp.weatherPublish()
-        time.sleep(1)
+        time.sleep(5)
 
 if __name__ == "__main__":
     main()

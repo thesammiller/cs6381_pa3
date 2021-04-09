@@ -36,6 +36,7 @@ def main():
 
     topic = sys.argv[1] if len(sys.argv) > 1 else "90210"
     api = sys.argv[2] if len(sys.argv) > 2 else "BROKER"
+    history = sys.argv[3] if len(sys.argv) > 3 else "5"
     
     if api not in system.keys():
         print("Usage error -- message api can either be FLOOD or BROKER")

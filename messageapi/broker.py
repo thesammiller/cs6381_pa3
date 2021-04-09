@@ -94,13 +94,14 @@ class BrokerProxy(ZeroProxy):
 ##############################################################
 
 class BrokerPublisher(ZeroPublisher):
-    def __init__(self, topic, history=5):
-        super().__init__(topic, history)
+    def __init__(self, topic="00000", history="5"):
+        # ZooAnimal initialize
+        super().__init__(topic=topic, history=history)
         self.history_list = []
 
     def add_to_history(self, data):
         self.history_list.append(data)
-        if len(self.history_list) > 10:
+        if len(self.history_list) > self.history:
             self.history_list = self.history_list[1:]
     
     def register(self):
@@ -114,18 +115,20 @@ class BrokerPublisher(ZeroPublisher):
     
     def publish(self, data):
         self.broker_update('')
+        self.add_to_history(data)
         if self.broker != None:
             # print ("Message API Sending: {} {}".format(self.topic, value))
-            message = {}
-            message['topic'] = self.topic
-            message['data'] = data
-            message['time'] = time.time()
-            message['seq_id'] = self.zk_seq_id
-            message['split'] = SPLITSTRING
-            #message_string = json.dumps(message)
-            #print(message_string)
-            message_string = "{topic}{split}{time}{split}{seq_id}{split}{data}".format(**message)
-            self.socket.send_string(message_string)
+            for d in self.history_list:
+                message = {}
+                message['topic'] = self.topic
+                message['data'] = d
+                message['time'] = time.time()
+                message['seq_id'] = self.zk_seq_id
+                message['split'] = SPLITSTRING
+                #message_string = json.dumps(message)
+                #print(message_string)
+                message_string = "{topic}{split}{time}{split}{seq_id}{split}{data}".format(**message)
+                self.socket.send_string(message_string)
     
 
 ################################################################################
@@ -138,9 +141,10 @@ class BrokerPublisher(ZeroPublisher):
 
 
 class BrokerSubscriber(ZeroSubscriber):
-    def __init__(self, topic):
+    def __init__(self, topic="00000", history="5"):
         # ZooAnimal initialize
-        super().__init__(topic)
+        super().__init__(topic=topic, history=history)
+        self.pub_owner = None
         self.setup_sockets()
 
     def setup_sockets(self):
@@ -155,8 +159,6 @@ class BrokerSubscriber(ZeroSubscriber):
         self.socket.connect(self.server_endpoint)
         self.socket.setsockopt_string(zmq.SUBSCRIBE, self.topic)
 
-    # sub gets message
-    # TODO: Sub history -- need to implement
     def notify(self):
         self.broker_update('')
         message = self.socket.recv_string()
@@ -167,15 +169,26 @@ class BrokerSubscriber(ZeroSubscriber):
         zk_decode = codecs.decode(zk_data[0])
         zk_json = json.loads(zk_decode)
         ownership = zk_json['ownership']
-        if ownership == 0:
-            # get difference in time between now and when message was sent
+        pub_history = zk_json['history']
+        if ownership == 0 and pub_history >= self.history:
+            self.pub_owner = zk_json['ip']
+        elif ownership == 0 and pub_history <= self.history:
+            clients = self.zk.get_children('/topic/'+self.topic)
+            publishers = [c for c in clients if "publisher" in c]
+            sorted_publishers = sorted(publishers, key=lambda p: int(p[-6:]))
+            for p in sorted_publishers:
+                data = self.zk.get("/topic/" + self.topic + '/' + p)
+                data_decoded = codecs.decode(data[0])
+                data_json = json.loads(data_decoded)
+                if data_json['history'] >= self.history:
+                    self.pub_owner = data_json['ip']
+                    break
+        if zk_json['ip'] == self.pub_owner:
             difference = time.time() - float(pub_time)
             # Write the difference in time from the publisher to the file
             with open("./logs/seconds_{}.log".format(self.ipaddress), "a") as f:
                 f.write(str(difference) + "\n")
             return data
-        #Subscribers must now check for none return
+        # Subscribers should check for none returned
         else:
             return None
-
-

@@ -9,9 +9,9 @@ h5 ./subscriber.py 12345 BROKER &
 h5 sleep 2
 h6 ./proxy.py BROKER &
 h6 sleep 5
-h7 ./pub32.py 54321 BROKER &
+h7 ./pub32.py 54321 BROKER 2 &
 h7 sleep 2
-h8 ./subscriber.py 54321 BROKER &
+h8 ./subscriber.py 54321 BROKER 8 &
 h8 sleep 2
 h9 ./proxy.py BROKER &
 h9 sleep 2
@@ -20,7 +20,7 @@ h10 sleep 2
 h11 ./subscriber.py 66666 BROKER &
 h2 sleep 5
 h1 ./publisher.py 12345 BROKER &
-h12 ./publisher.py 54321 BROKER &
+h12 ./publisher.py 54321 BROKER 10 &
 h3 sleep 2
 h6 sleep 2
 h9 sleep 2
