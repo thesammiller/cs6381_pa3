@@ -11,8 +11,8 @@ system = {"FLOOD": FloodSubscriber,
 
 class WeatherSubscriber:
 
-    def __init__(self, topic, api):
-        self.sub = system[api](topic)
+    def __init__(self, api, topic="00000",history="0"):
+        self.sub = system[api](topic=topic, history=history)
         self.topic = topic
         self.sub.register_sub()
 
@@ -21,11 +21,12 @@ class WeatherSubscriber:
         total_temp = 0
         for update_nbr in range(5):
             message = self.sub.notify()
-            #print("Suscriber Application got message.")
-            #temperature, relhumidity = string.split(" ")
-            data = json.loads(message)
-            temperature = data['temperature']
-            total_temp += int(temperature)
+            if message is not None:
+                # print("Suscriber Application got message.")
+                # temperature, relhumidity = string.split(" ")
+                data = json.loads(message)
+                temperature = data['temperature']
+                total_temp += int(temperature)
             
         print("Average temperature for zipcode '%s' was %dF" % (self.topic, total_temp / (update_nbr+1)))
 
@@ -33,6 +34,7 @@ def main():
 
     topic_filter = sys.argv[1] if len(sys.argv) > 1 else "90210"
     api = sys.argv[2] if len(sys.argv) > 2 else "BROKER"
+    history = sys.argv[3] if len (sys.argv) >3 else "5"
     
     if api not in system:
         print("Usage error -- message API can either be FLOOD or BROKER")
@@ -42,7 +44,7 @@ def main():
         sys.exit(-1)
 
         
-    ws = WeatherSubscriber(topic_filter, api)
+    ws = WeatherSubscriber(api, topic=topic_filter, history=history)
     while True:
         ws.run()
 
