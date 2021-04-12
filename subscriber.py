@@ -18,17 +18,20 @@ class WeatherSubscriber:
 
     def run(self):
         print("Running subscriber application...")
-        total_temp = 0
-        for update_nbr in range(5):
+        total_temp = []
+        while len(total_temp) < self.sub.history:
             message = self.sub.notify()
             if message is not None:
+                message = self.sub.notify()
                 # print("Suscriber Application got message.")
                 # temperature, relhumidity = string.split(" ")
-                data = json.loads(message)
-                temperature = data['temperature']
-                total_temp += int(temperature)
-            
-        print("Average temperature for zipcode '%s' was %dF" % (self.topic, total_temp / (update_nbr+1)))
+                try:
+                    data = json.loads(message)
+                    temperature = data['temperature']
+                    total_temp.append(int(temperature))
+                except:
+                    pass
+        print("Average temperature for zipcode '%s' was %dF" % (self.topic, sum(total_temp) / max(len(total_temp), 1)))
 
 def main():
 

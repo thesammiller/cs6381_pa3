@@ -13,14 +13,14 @@ system = {"BROKER": BrokerPublisher,
 
 class WeatherPublisher:
 
-    def __init__(self, topic, broker, history):
+    def __init__(self, topic, broker, history = "5"):
         self.topic = topic
         self.pub = system[broker](self.topic, history=history)
         self.pub.register_pub()
         
     def generateWeather(self):
-        temperature = 32
-        relhumidity = 32
+        temperature = 66
+        relhumidity = 66
         message = {}
         message['temperature'] = temperature
         message['humidity'] = relhumidity

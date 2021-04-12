@@ -13,9 +13,8 @@ system = {"BROKER": BrokerPublisher,
 
 class WeatherPublisher:
 
-    def __init__(self, topic, broker, history):
-        self.topic = topic
-        self.pub = system[broker](self.topic, history=history)
+    def __init__(self, api, topic="00000", history="5"):
+        self.pub = system[api](topic=topic, history=history)
         self.pub.register_pub()
         
     def generateWeather(self):
@@ -29,7 +28,7 @@ class WeatherPublisher:
     def weatherPublish(self):
         data = self.generateWeather()
         self.pub.publish("{data}".format(data=data))
-        print ("Application sending: {topic} {data}".format(topic=self.topic, data=data))
+        print ("Application sending: {topic} {data}".format(topic=self.pub.topic, data=data))
 
 
 def main():
@@ -46,10 +45,10 @@ def main():
         print("Usage error -- topic must be 5 digit zipcode.")
         sys.exit(-1)
         
-    wp = WeatherPublisher(topic, api, history)
+    wp = WeatherPublisher(api, topic=topic, history=history)
     while True:
         wp.weatherPublish()
-        time.sleep(1)
+        time.sleep(5)
 
 if __name__ == "__main__":
     main()
