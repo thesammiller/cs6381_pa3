@@ -1,5 +1,9 @@
 h1 ./restartzoo.sh
-h2 ./brokerproxy.py &
+h23 ./load.py &
+h24 proxy.py BROKER &
+h25 proxy.py BROKER &
+H26 proxy.py BROKER &
+
 h2 sleep 5
 h4 ./publisher.py 12345 BROKER &
 h2 sleep 1
@@ -40,4 +44,5 @@ h2 sleep 1
 h22 ./publisher.py 12345 BROKER &
 h2 sleep 1
 h21 ./subscriber.py 12345 BROKER &
+
 

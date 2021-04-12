@@ -1,5 +1,6 @@
 h1 ./restartzoo.sh
-h2 ./floodproxy.py &
+h23 ./load.py &
+h24 proxy.py FLOOD &
 h2 sleep 5
 h4 ./publisher.py 12345 FLOOD &
 h2 sleep 1
