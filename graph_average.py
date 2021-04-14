@@ -16,7 +16,7 @@ def build_data(filenames):
     filedata = {}
     for file in filenames:
         #dfcolumns = pd.read_csv(basefile.format(file=file), nrows=1, delim_whitespace=True)
-        df = pd.read_csv('logs/' + file, header=None, skiprows=15, engine = 'python', skipfooter = 10)
+        df = pd.read_csv('logs/' + file, header=None, skiprows=0, engine = 'python', skipfooter = 1)
         filedata[file] = df
     return filedata
 

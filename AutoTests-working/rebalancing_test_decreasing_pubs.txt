@@ -1,0 +1,42 @@
+h1 ./restartzoo.sh
+
+h1 echo “test for in rebalancing after initial matching. Test for pub sub rematching ”
+h1 echo “due to a pub death.”
+h1 echo “start load balancer on h2”
+h2 ./load.py &
+h1 echo "start broker on h3"
+h3 ./proxy.py BROKER &
+h2 sleep 5
+h1 echo "start pub with history 5 on H4"
+h4 ./pub32.py 12345 BROKER &
+h1 sleep 5
+h1 echo "start pub with history 7 on H5"
+h5 ./pub66.py 12345 BROKER 7 &
+h1 sleep 5
+h1 echo "run broker on h6"
+h6 ./proxy.py BROKER &
+h1 sleep 5
+h1 echo "start sub with history requirement 7 on H7" 
+h7 ./subscriber.py 12345 BROKER 7 > h6sub_processes.txt &
+h1 sleep 5
+h1 echo "start sub with history requirement of 5 on H8"
+h8 ./subscriber.py 12345 BROKER 5 > h5pub_processes.txt & 
+h1 sleep 5
+h1 echo "H7 sub should connect with pub publishing 66. H8 sub should connect with "
+h1 echo "pub publishing 32."
+h1 echo "there should be two systems on each broker - 15 s to view" 
+h1 sleep 15
+
+h1 echo "run broker to h9"
+h9./proxy.py BROKER &
+h1 sleep 5
+h1 echo "add another pub to meet threshold for three brokers"
+h10 ./pub32.py 66666 BROKER &
+h1 sleep 5
+h1 echo "Now all three brokers should be in use "
+h1 echo "15 s to view "
+h1 sleep 15 
+
+h1 echo "now kill pub on H4 to make sure load is rebalanced to two brokers and that"
+h1 echo "the sub connected to H4 (due to highest ownership) is reassigned"
+h4 kill $(ps | grep python | awk '{print $1}')

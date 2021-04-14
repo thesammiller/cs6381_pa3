@@ -23,7 +23,7 @@ SUBSCRIBER = "subscriber"
 NO_REGISTERED_ENTRIES = ""
 
 # LOAD THRESHOLD VARIABLE -- first and second
-LOAD_THRESHOLDS = [2, 4]
+LOAD_THRESHOLDS = [8, 16]
 
 
 ###############################################################

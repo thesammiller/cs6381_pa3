@@ -171,7 +171,7 @@ class BrokerSubscriber(ZeroSubscriber):
         pub_history = zk_json['history']
         if ownership == 0 and pub_history >= self.history:
             self.pub_owner = zk_json['ip']
-        elif ownership == 0 and pub_history <= self.history:
+        elif ownership == 0 and pub_history < self.history:
             clients = self.zk.get_children('/topic/'+self.topic)
             publishers = [c for c in clients if "publisher" in c]
             sorted_publishers = sorted(publishers, key=lambda pub: int(pub[-6:]))

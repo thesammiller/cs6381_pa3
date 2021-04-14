@@ -14,7 +14,7 @@ FILENAMES = [x for x in os.listdir('logs') if 'seconds' in x]
 def build_data(filenames):
     filedata = {}
     for file in filenames:
-        df = pd.read_csv('logs/' + file, header=None, skiprows=15, engine = 'python', skipfooter = 10)
+        df = pd.read_csv('logs/' + file, header=None, skiprows=0, engine = 'python')
         filedata[file] = df
     return filedata
 
