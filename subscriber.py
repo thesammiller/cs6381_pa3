@@ -33,8 +33,8 @@ class WeatherSubscriber:
                     pass
         print("Average temperature for zipcode '%s' was %dF" % (self.topic, sum(total_temp) / max(len(total_temp), 1)))
 
-def main():
 
+def main():
     topic_filter = sys.argv[1] if len(sys.argv) > 1 else "90210"
     api = sys.argv[2] if len(sys.argv) > 2 else "BROKER"
     history = sys.argv[3] if len (sys.argv) >3 else "5"
@@ -46,10 +46,10 @@ def main():
         print("Usage error -- topic must be a zipcode (all numbers, 5 total).")
         sys.exit(-1)
 
-        
     ws = WeatherSubscriber(api, topic=topic_filter, history=history)
     while True:
         ws.run()
+
 
 if __name__ == "__main__":
     main()

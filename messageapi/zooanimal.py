@@ -23,7 +23,7 @@ ZOOKEEPER_LOCATION = '{zookeeper_ip}:{zookeeper_port}'.format(zookeeper_ip=ZOOKE
 NETWORK_PREFIX = "10"
 
 
-ZOOKEEPER_PATH_STRING = '/{role}/{topic}'
+ZOOKEEPER_PATH_STRING = '/topic/{topic}/{role}'
 PATH_TO_MASTER_BROKER = "/broker/master"
 
 

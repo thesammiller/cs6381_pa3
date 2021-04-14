@@ -1,0 +1,31 @@
+h1 ./restartzoo.sh
+h23 ./load.py &
+h24 proxy.py FLOOD &
+h2 sleep 5
+h4 ./publisher.py 12345 FLOOD &
+h2 sleep 1
+h3 ./subscriber.py 12345 FLOOD &
+h2 sleep 1
+
+h5 ./subscriber.py 12345 FLOOD &
+h2 sleep 1
+
+h7 ./subscriber.py 12345 FLOOD &
+h2 sleep 1
+h9 ./subscriber.py 12345 FLOOD &
+h2 sleep 1
+h11 ./subscriber.py 12345 FLOOD &
+h2 sleep 1
+h13 ./subscriber.py 12345 FLOOD &
+h2 sleep 1
+
+h15 ./subscriber.py 12345 FLOOD &
+h2 sleep 1
+
+h17 ./subscriber.py 12345 FLOOD &
+h2 sleep 1
+h19 ./subscriber.py 12345 FLOOD &
+h2 sleep 1
+
+h21 ./subscriber.py 12345 FLOOD &
+
