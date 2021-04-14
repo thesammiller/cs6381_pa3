@@ -1,0 +1,41 @@
+h1 ./zooscripts/restartzoo.sh
+h2 ./load.py &
+h2 sleep 2
+
+h3 ./proxy.py BROKER &
+h2 sleep 5
+h4 ./proxy.py BROKER &
+h2 sleep 5
+h5 ./proxy.py BROKER &
+h2 sleep 5
+
+h6 ./publisher.py 12345 BROKER 2 &
+h1 sleep 2
+h7 ./subscriber.py 12345 BROKER 2 &
+h1 sleep 2
+
+h8 ./publisher.py 54321 BROKER 2 &
+h1 sleep 5
+h9 ./subscriber.py 54321 BROKER 2 &
+h1 sleep 2
+
+h10 ./publisher.py 11111 BROKER 2 &
+h1 sleep 2
+h11 ./subscriber.py 11111 BROKER 2 &
+h1 sleep 2
+
+h12 ./publisher.py 22222 BROKER 2 &
+h1 sleep 2
+h13 ./subscriber.py 22222 BROKER 2 &
+h1 sleep 2
+
+h14 ./publisher.py 33333 BROKER 2 &
+h1 sleep 2
+h15 ./subscriber.py 33333 BROKER 2 &
+h1 sleep 2
+
+h16 ./publisher.py 44444 BROKER 2  &
+h1 sleep 2
+h17 ./subscriber.py 44444 BROKER 2 &
+h1 sleep 2
+h1 echo "test end"
